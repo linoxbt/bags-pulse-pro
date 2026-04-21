@@ -41,7 +41,10 @@ export const Route = createFileRoute("/")({
 });
 
 function LandingPage() {
-  const { tokens, live } = Route.useLoaderData();
+  const { tokens, live } = Route.useLoaderData() as {
+    tokens: import("@/lib/sample-data").Token[];
+    live: boolean;
+  };
   const top = tokens.slice(0, 6);
   const totalMcap = tokens.reduce((s, t) => s + t.marketCap, 0);
   const totalVol = tokens.reduce((s, t) => s + t.volume24h, 0);
