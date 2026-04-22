@@ -34,6 +34,15 @@ function AuthPage() {
               </div>
               <ConnectWallet size="lg" full />
             </div>
+            <div className="rounded-md border border-border/40 bg-secondary/10 p-3 text-xs text-muted-foreground">
+              <p className="font-medium text-foreground mb-1">Wallet not opening?</p>
+              <p>
+                Privy needs your domain whitelisted. In the Privy dashboard → App
+                settings → Allowed origins, add{" "}
+                <code className="font-mono text-primary">*.lovable.app</code> and{" "}
+                <code className="font-mono text-primary">*.lovableproject.com</code>.
+              </p>
+            </div>
             <p className="text-center text-xs text-muted-foreground">
               By continuing you agree to BagsPulse{" "}
               <Link to="/" className="text-primary hover:underline">terms</Link>.
