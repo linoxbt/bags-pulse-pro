@@ -31,6 +31,7 @@ export const Route = createFileRoute("/token/$mint")({
 
 function TokenPage() {
   const { token } = Route.useLoaderData();
+  if (!token) return null;
   return (
     <PageShell>
       <div className="mx-auto max-w-6xl px-4 sm:px-6 py-10 space-y-6">
