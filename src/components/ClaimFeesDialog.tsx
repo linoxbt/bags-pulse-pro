@@ -160,9 +160,7 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
             <Coins className="h-5 w-5 text-primary" /> Claim creator fees
           </DialogTitle>
           <DialogDescription>
-            {live
-              ? "Live claimable positions from the Bags fee program."
-              : "Sample positions — connect a wallet with active fees to see live data."}
+            {live ? "Live claimable positions from the Bags fee program." : "Connect a wallet with active fees to see claimable positions."}
           </DialogDescription>
         </DialogHeader>
 
