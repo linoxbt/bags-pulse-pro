@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Loader2, Wallet, CheckCircle2, AlertCircle, Coins } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
+import { useSafeSignTransaction } from "@/hooks/useSafeSignTransaction";
 import { ConnectWallet } from "./ConnectWallet";
 import {
   getClaimablePositions,
@@ -18,7 +19,6 @@ import {
   recordFeeClaim,
   type ClaimablePosition,
 } from "@/server/bagsrouter";
-import { useSignTransaction } from "@privy-io/react-auth/solana";
 import { Connection, VersionedTransaction, Transaction } from "@solana/web3.js";
 import { getHeliusEndpoints } from "@/server/helius";
 import { formatUsd } from "@/lib/format";
@@ -32,22 +32,12 @@ interface Props {
 
 export function ClaimFeesDialog({ open, onOpenChange }: Props) {
   const wallet = useWallet();
+  const signer = useSafeSignTransaction();
   const [positions, setPositions] = useState<ClaimablePosition[]>([]);
   const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [claiming, setClaiming] = useState(false);
-
-  // Privy hook — only safe to call when configured
-  let signTransaction: ((tx: { transaction: Transaction | VersionedTransaction }) => Promise<{ signedTransaction: Transaction | VersionedTransaction }>) | null = null;
-  try {
-    if (wallet.configured) {
-      const { signTransaction: st } = useSignTransaction();
-      signTransaction = st as typeof signTransaction;
-    }
-  } catch {
-    // ignore — provider not mounted
-  }
 
   useEffect(() => {
     if (!open || !wallet.address) return;
