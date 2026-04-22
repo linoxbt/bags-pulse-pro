@@ -100,7 +100,7 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
         return;
       }
 
-      if (!signTransaction) {
+      if (!signer?.signTransaction) {
         toast.error("Wallet not ready to sign");
         setClaiming(false);
         return;
@@ -114,14 +114,17 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
       } catch {
         tx = Transaction.from(buf);
       }
-      const { signedTransaction } = await signTransaction({ transaction: tx });
+      const result = await signer.signTransaction({ transaction: tx });
+      const signedTransaction = result.signedTransaction as Transaction | VersionedTransaction;
 
       // Submit
       const ep = await getHeliusEndpoints();
       const conn = new Connection(ep.rpc, "confirmed");
-      const sig = await conn.sendRawTransaction(
-        "serialize" in signedTransaction ? signedTransaction.serialize() : Buffer.from((signedTransaction as VersionedTransaction).serialize()),
-      );
+      const serialized =
+        signedTransaction instanceof VersionedTransaction
+          ? signedTransaction.serialize()
+          : (signedTransaction as Transaction).serialize();
+      const sig = await conn.sendRawTransaction(serialized);
       await conn.confirmTransaction(sig, "confirmed");
 
       // Record
