@@ -51,7 +51,7 @@ export const getFeeSplitStats = createServerFn({ method: "GET" }).handler(async 
   const { data } = await (supabaseAdmin.from("fee_splits") as never as {
     select: (cols: string) => {
       order: (c: string, o: { ascending: boolean }) => {
-        limit: (n: number) => Promise<{ data: Array<Record<string, number | string>> | null }>;
+        limit: (n: number) => Promise<{ data: Array<Record<string, number>> | null }>;
       };
     };
   })
