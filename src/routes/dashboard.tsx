@@ -4,13 +4,13 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchTokens, fetchFeed } from "@/server/bags";
 import { formatNumber, formatPct, formatUsd, timeAgo } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import type { FeedEvent, Token } from "@/lib/sample-data";
-import { buildPriceSeries } from "@/lib/sample-data";
+import type { FeedEvent, Token } from "@/server/bags";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowDownRight, ArrowUpRight, Flame, GraduationCap, Megaphone, Radio, Rocket, Sparkles, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLiveSlot } from "@/hooks/useLiveSlot";
 import { ConnectWallet } from "@/components/ConnectWallet";
+import { useLiveBagsFeed } from "@/hooks/useLiveBagsFeed";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -36,8 +36,9 @@ function DashboardPage() {
   const totalFees = tokens.tokens.reduce((s, t) => s + t.feesEarned24h, 0);
   const totalHolders = tokens.tokens.reduce((s, t) => s + t.holders, 0);
   const top = [...tokens.tokens].sort((a, b) => b.marketCap - a.marketCap).slice(0, 8);
-  const series = buildPriceSeries(11, 60);
+  const series = tokens.tokens.slice(0, 24).map((t, i) => ({ i, v: t.volume24h }));
   const { slot, live: wsLive } = useLiveSlot();
+  const liveFeed = useLiveBagsFeed(feed.events);
 
   return (
     <PageShell>
@@ -46,7 +47,7 @@ function DashboardPage() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Ecosystem dashboard</h1>
             <p className="text-muted-foreground mt-1 text-sm flex items-center gap-2 flex-wrap">
-              <span>{tokens.live ? "Live from Bags REST API" : "Curated demo data"}</span>
+              <span>Live from Bags API</span>
               <span>·</span>
               <span className="font-mono">{tokens.tokens.length} tokens</span>
               <span>·</span>
@@ -116,7 +117,7 @@ function DashboardPage() {
             </CardHeader>
             <CardContent className="p-0 max-h-[300px] overflow-y-auto">
               <ul className="divide-y divide-border/50">
-                {feed.events.slice(0, 8).map((e) => (
+                {liveFeed.events.slice(0, 8).map((e) => (
                   <FeedRow key={e.id} e={e} />
                 ))}
               </ul>

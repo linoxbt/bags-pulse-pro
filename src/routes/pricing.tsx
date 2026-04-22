@@ -43,12 +43,12 @@ const TIERS = [
   {
     name: "Creator",
     price: "$29.99",
-    desc: "For token creators and apps building on BagsRouter.",
+    desc: "For token creators and apps building on PulseRouter.",
     features: [
       "Everything in Pro",
       "Creator CRM + holder insights",
       "Custom fee dashboards",
-      "BagsRouter partner registry",
+      "PulseRouter partner registry",
       "Webhooks + API access",
     ],
     cta: "Become a creator",
@@ -66,7 +66,7 @@ function PricingPage() {
           <h1 className="text-4xl font-semibold tracking-tight">Simple, fair, on-chain.</h1>
           <p className="text-muted-foreground">
             Start free. Upgrade when you need pro analytics or are building on
-            top of BagsRouter.
+            top of PulseRouter.
           </p>
         </header>
         <div className="grid md:grid-cols-3 gap-5">

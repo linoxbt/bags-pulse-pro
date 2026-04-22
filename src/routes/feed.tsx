@@ -1,13 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { fetchFeed } from "@/server/bags";
-import type { FeedEvent } from "@/lib/sample-data";
+import { fetchFeed, type FeedEvent } from "@/server/bags";
 import { formatNumber, timeAgo } from "@/lib/format";
 import { ArrowDownRight, ArrowUpRight, GraduationCap, Megaphone, Rocket, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLiveBagsFeed } from "@/hooks/useLiveBagsFeed";
 
 export const Route = createFileRoute("/feed")({
   head: () => ({
@@ -31,8 +31,9 @@ const ICONS = {
 
 function FeedPage() {
   const data = Route.useLoaderData() as { events: FeedEvent[]; live: boolean };
+  const liveFeed = useLiveBagsFeed(data.events);
   const [filter, setFilter] = useState<"all" | FeedEvent["type"]>("all");
-  const events = filter === "all" ? data.events : data.events.filter((e) => e.type === filter);
+  const events = filter === "all" ? liveFeed.events : liveFeed.events.filter((e) => e.type === filter);
 
   return (
     <PageShell>
@@ -59,7 +60,7 @@ function FeedPage() {
         <Card className="bg-card/60">
           <CardHeader className="border-b border-border/50">
             <CardTitle className="text-base flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-primary pulse-ring" /> Live
+              <span className="h-2 w-2 rounded-full bg-primary pulse-ring" /> {liveFeed.connected ? "Live WebSocket" : "Live Bags API"}
             </CardTitle>
           </CardHeader>
           <CardContent className="p-0">

@@ -6,7 +6,7 @@ export const Route = createFileRoute("/docs")({
   head: () => ({
     meta: [
       { title: "Developer docs — BagsPulse" },
-      { name: "description", content: "BagsRouter SDK reference and Bags API integration guide." },
+      { name: "description", content: "PulseRouter SDK reference and Bags API integration guide." },
     ],
   }),
   component: DocsPage,
@@ -19,7 +19,7 @@ function DocsPage() {
         <header className="space-y-3">
           <p className="text-sm text-primary font-semibold uppercase tracking-widest">Developer docs</p>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Build with BagsRouter SDK
+            Build with PulseRouter SDK
           </h1>
           <p className="text-muted-foreground">
             Earn protocol fees on every token your app helps launch. Wrap the
@@ -28,7 +28,7 @@ function DocsPage() {
         </header>
 
         <Section title="1. Install">
-          <Code>{`npm install @bagsrouter/sdk @bagsfm/bags-sdk @solana/web3.js`}</Code>
+          <Code>{`npm install @pulserouter/sdk @bagsfm/bags-sdk @solana/web3.js`}</Code>
         </Section>
 
         <Section title="2. Register your app">
@@ -36,9 +36,9 @@ function DocsPage() {
             One-time on-chain registration creates a partner config PDA scoped
             to your app wallet. 0.1 SOL fee.
           </p>
-          <Code>{`import { BagsRouter } from "@bagsrouter/sdk";
+          <Code>{`import { PulseRouter } from "@pulserouter/sdk";
 
-await BagsRouter.registerPartner({
+await PulseRouter.registerPartner({
   appId: "your-app-id",
   feeWallet: yourAppWallet,
   bps: 1500,            // your share per launch (15%)
@@ -46,11 +46,11 @@ await BagsRouter.registerPartner({
         </Section>
 
         <Section title="3. Launch tokens through the router">
-          <Code>{`import { BagsRouter } from "@bagsrouter/sdk";
+          <Code>{`import { PulseRouter } from "@pulserouter/sdk";
 import { Connection } from "@solana/web3.js";
 
 const connection = new Connection(process.env.HELIUS_RPC_URL!);
-const router = new BagsRouter({
+const router = new PulseRouter({
   apiKey: process.env.BAGS_API_KEY!,
   appId: "your-app-id",
   connection,

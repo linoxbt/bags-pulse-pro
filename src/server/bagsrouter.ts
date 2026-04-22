@@ -26,39 +26,31 @@ async function bagsFetch(path: string): Promise<unknown | null> {
   }
 }
 
-// Get all claimable fee positions for a wallet.
-// Falls back to a deterministic sample so the UI shows real claim mechanics.
+// Get all claimable fee positions for a wallet from the live Bags fee program.
 export const getClaimablePositions = createServerFn({ method: "POST" })
   .inputValidator((d: { wallet: string }) => d)
   .handler(async ({ data }): Promise<{ positions: ClaimablePosition[]; live: boolean }> => {
     const live = (await bagsFetch(
-      `/fee-share/claimable-positions?wallet=${data.wallet}`,
-    )) as { positions?: unknown[] } | null;
+      `/token-launch/claimable-positions?wallet=${data.wallet}`,
+    )) as { positions?: unknown[]; response?: unknown[] } | null;
 
-    if (live && Array.isArray(live.positions) && live.positions.length > 0) {
-      const positions: ClaimablePosition[] = live.positions.slice(0, 50).map((raw) => {
+    const list = Array.isArray(live?.response) ? live.response : Array.isArray(live?.positions) ? live.positions : [];
+    if (list.length > 0) {
+      const positions: ClaimablePosition[] = list.slice(0, 50).map((raw) => {
         const p = raw as Record<string, unknown>;
         return {
-          mint: String(p.mint ?? ""),
+          mint: String(p.tokenMint ?? p.mint ?? ""),
           symbol: String(p.symbol ?? "?"),
           name: String(p.name ?? "Unknown"),
-          amount: Number(p.amount ?? 0),
-          amountUsd: Number(p.amountUsd ?? 0),
+          amount: Number(p.amount ?? p.claimableAmount ?? 0),
+          amountUsd: Number(p.amountUsd ?? p.claimableAmountUsd ?? 0),
           feeBps: Number(p.feeBps ?? 0),
         };
       });
       return { positions, live: true };
     }
 
-    // Sample fallback so the claim UI is testable without a funded wallet
-    return {
-      positions: [
-        { mint: "PULSE0000", symbol: "PULSE", name: "PulseDAO", amount: 1.234, amountUsd: 184.5, feeBps: 100 },
-        { mint: "NOVA0000", symbol: "NOVA", name: "NovaBags", amount: 0.482, amountUsd: 72.4, feeBps: 100 },
-        { mint: "FROG0000", symbol: "FROG", name: "PondLord", amount: 0.097, amountUsd: 14.6, feeBps: 100 },
-      ],
-      live: false,
-    };
+    return { positions: [], live: true };
   });
 
 // Build an unsigned claim transaction for the user's wallet to sign.
@@ -71,20 +63,21 @@ export const buildClaimTransaction = createServerFn({ method: "POST" })
       return { transaction: null, error: "Bags API key not configured" };
     }
     try {
-      const res = await fetch(`${BAGS_BASE}/fee-share/build-claim-transaction`, {
+      const res = await fetch(`${BAGS_BASE}/token-launch/claim-txs/v3`, {
         method: "POST",
         headers: {
           "x-api-key": apiKey,
           "content-type": "application/json",
           accept: "application/json",
         },
-        body: JSON.stringify({ wallet: data.wallet, mints: data.mints }),
+        body: JSON.stringify({ feeClaimer: data.wallet, tokenMint: data.mints[0] }),
       });
       if (!res.ok) {
         return { transaction: null, error: `Bags returned ${res.status}` };
       }
-      const json = (await res.json()) as { transaction?: string };
-      return { transaction: json.transaction ?? null };
+      const json = (await res.json()) as { transaction?: string; response?: string | { transaction?: string } };
+      const responseTx = typeof json.response === "string" ? json.response : json.response?.transaction;
+      return { transaction: json.transaction ?? responseTx ?? null };
     } catch (e) {
       return { transaction: null, error: (e as Error).message };
     }

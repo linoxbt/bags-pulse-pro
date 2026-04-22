@@ -9,6 +9,8 @@ import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { BagsPulseLogo } from "@/components/BagsPulseLogo";
+import { ConnectWallet } from "@/components/ConnectWallet";
+import { Mail, Wallet } from "lucide-react";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -25,6 +27,19 @@ function AuthPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [magicLoading, setMagicLoading] = useState(false);
+
+  async function handleMagicLink(e: React.FormEvent) {
+    e.preventDefault();
+    setMagicLoading(true);
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+    });
+    setMagicLoading(false);
+    if (error) return toast.error(error.message);
+    toast.success("Magic link sent", { description: "Check your email to continue." });
+  }
 
   async function handleSignIn(e: React.FormEvent) {
     e.preventDefault();
@@ -57,16 +72,31 @@ function AuthPage() {
             <div className="flex flex-col items-center gap-3 text-center">
               <BagsPulseLogo withWordmark={false} size={48} />
               <h1 className="text-2xl font-semibold tracking-tight">Welcome to BagsPulse</h1>
-              <p className="text-sm text-muted-foreground">
-                Track every Bags token. Build on BagsRouter.
-              </p>
+              <p className="text-sm text-muted-foreground">Choose how you want to enter BagsPulse.</p>
             </div>
-            <Tabs defaultValue="signin">
+            <Tabs defaultValue="wallet">
               <TabsList className="grid grid-cols-2 w-full bg-secondary/40">
-                <TabsTrigger value="signin">Sign in</TabsTrigger>
-                <TabsTrigger value="signup">Create account</TabsTrigger>
+                <TabsTrigger value="wallet">Wallet</TabsTrigger>
+                <TabsTrigger value="magic">Magic link</TabsTrigger>
               </TabsList>
-              <TabsContent value="signin" className="pt-5">
+              <TabsContent value="wallet" className="pt-5 space-y-4">
+                <div className="rounded-lg border border-border/60 bg-secondary/20 p-4 space-y-3">
+                  <div className="flex items-center gap-2 text-sm font-medium"><Wallet className="h-4 w-4 text-primary" /> Solana wallet</div>
+                  <ConnectWallet size="lg" full />
+                </div>
+              </TabsContent>
+              <TabsContent value="magic" className="pt-5">
+                <form onSubmit={handleMagicLink} className="space-y-3">
+                  <div className="space-y-1.5">
+                    <Label>Email</Label>
+                    <Input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+                  </div>
+                  <Button type="submit" disabled={magicLoading} className="w-full bg-gradient-to-r from-primary to-primary-glow text-primary-foreground">
+                    <Mail className="h-4 w-4" /> {magicLoading ? "Sending…" : "Send magic link"}
+                  </Button>
+                </form>
+              </TabsContent>
+              <TabsContent value="signin" className="hidden pt-5">
                 <form onSubmit={handleSignIn} className="space-y-3">
                   <div className="space-y-1.5">
                     <Label>Email</Label>
@@ -81,7 +111,7 @@ function AuthPage() {
                   </Button>
                 </form>
               </TabsContent>
-              <TabsContent value="signup" className="pt-5">
+              <TabsContent value="signup" className="hidden pt-5">
                 <form onSubmit={handleSignUp} className="space-y-3">
                   <div className="space-y-1.5">
                     <Label>Email</Label>

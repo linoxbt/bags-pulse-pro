@@ -12,6 +12,7 @@ import { Loader2, Wallet, CheckCircle2, AlertCircle, Coins } from "lucide-react"
 import { useEffect, useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useSafeSignTransaction } from "@/hooks/useSafeSignTransaction";
+import { useWallets } from "@privy-io/react-auth/solana";
 import { ConnectWallet } from "./ConnectWallet";
 import {
   getClaimablePositions,
@@ -33,6 +34,7 @@ interface Props {
 export function ClaimFeesDialog({ open, onOpenChange }: Props) {
   const wallet = useWallet();
   const signer = useSafeSignTransaction();
+  const { wallets } = useWallets();
   const [positions, setPositions] = useState<ClaimablePosition[]>([]);
   const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -75,32 +77,13 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
       });
 
       if (!transaction) {
-        // Fallback: simulate the claim locally and record it
-        const { data: { user } } = await supabase.auth.getUser();
-        for (const mint of mints) {
-          const pos = positions.find((p) => p.mint === mint)!;
-          if (user) {
-            await recordFeeClaim({
-              data: {
-                wallet: wallet.address,
-                mint: pos.mint,
-                symbol: pos.symbol,
-                amount: pos.amount,
-                amountUsd: pos.amountUsd,
-                txSignature: `sim_${Date.now()}_${pos.mint}`,
-              },
-            });
-          }
-        }
-        toast.success(`Simulated claim of ${formatUsd(total)}`, {
-          description: error ?? "On-chain claim unavailable — recorded as simulation",
-        });
-        onOpenChange(false);
+        toast.error("On-chain claim unavailable", { description: error ?? "Bags did not return a claim transaction." });
         setClaiming(false);
         return;
       }
 
-      if (!signer?.signTransaction) {
+      const solanaWallet = wallets.find((w) => w.address === wallet.address) ?? wallets[0];
+      if (!signer?.signTransaction || !solanaWallet) {
         toast.error("Wallet not ready to sign");
         setClaiming(false);
         return;
@@ -115,16 +98,15 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
         Transaction.from(buf);
       }
 
-      // We need a connected Solana wallet object for Privy's signer.
-      // We can't easily get it without `useWallets()` here; surface a helpful
-      // message and skip on-chain submission for this iteration.
-      toast.error("On-chain signing path not wired in this build. Recording claim as pending.");
-
-      // Submit endpoint setup (kept for future wiring)
       const ep = await getHeliusEndpoints();
       const conn = new Connection(ep.rpc, "confirmed");
-      void conn;
-      const sig = `pending_${Date.now()}`;
+      const { signedTransaction } = await signer.signTransaction({
+        transaction: buf,
+        wallet: solanaWallet,
+        chain: "solana:mainnet",
+      });
+      const sig = await conn.sendRawTransaction(signedTransaction, { skipPreflight: false });
+      await conn.confirmTransaction(sig, "confirmed");
 
       // Record
       const { data: { user } } = await supabase.auth.getUser();
@@ -160,9 +142,7 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
             <Coins className="h-5 w-5 text-primary" /> Claim creator fees
           </DialogTitle>
           <DialogDescription>
-            {live
-              ? "Live claimable positions from the Bags fee program."
-              : "Sample positions — connect a wallet with active fees to see live data."}
+            {live ? "Live claimable positions from the Bags fee program." : "Connect a wallet with active fees to see claimable positions."}
           </DialogDescription>
         </DialogHeader>
 

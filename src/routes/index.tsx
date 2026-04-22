@@ -26,7 +26,7 @@ export const Route = createFileRoute("/")({
       {
         name: "description",
         content:
-          "Track every Bags token in real time. Leaderboards, creator scorecards, portfolios, and the BagsRouter fee-split protocol — all in one super-dashboard.",
+          "Track every Bags token in real time. Leaderboards, creator scorecards, portfolios, and the PulseRouter fee-split protocol — all in one super-dashboard.",
       },
       { property: "og:title", content: "BagsPulse — Social finance for Bags.fm" },
       {
@@ -42,7 +42,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const { tokens, live } = Route.useLoaderData() as {
-    tokens: import("@/lib/sample-data").Token[];
+    tokens: import("@/server/bags").Token[];
     live: boolean;
   };
   const top = tokens.slice(0, 6);
@@ -68,7 +68,7 @@ function LandingPage() {
               <p className="text-lg text-muted-foreground max-w-xl">
                 BagsPulse aggregates every active token on Bags.fm into a real-time
                 social finance super-dashboard — leaderboards, creator scorecards,
-                portfolio P&amp;L, and the BagsRouter fee-split protocol for app
+                portfolio P&amp;L, and the PulseRouter fee-split protocol for app
                 builders.
               </p>
               <div className="flex flex-wrap gap-3">
@@ -78,7 +78,7 @@ function LandingPage() {
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <Link to="/router">Explore BagsRouter →</Link>
+                  <Link to="/router">Explore PulseRouter →</Link>
                 </Button>
               </div>
               <div className="flex flex-wrap gap-6 pt-2 text-sm">
@@ -153,7 +153,7 @@ function LandingPage() {
           </h2>
           <p className="mt-3 text-muted-foreground">
             BagsPulse pairs a beautifully crafted analytics super-dashboard with
-            the BagsRouter fee-split protocol — so every builder, creator and
+            the PulseRouter fee-split protocol — so every builder, creator and
             holder sits inside the same value loop.
           </p>
         </div>
@@ -164,7 +164,7 @@ function LandingPage() {
           <Feature icon={Coins} title="Portfolios & P&amp;L" body="Connect a wallet, see every Bags token you hold with cost basis and live P&amp;L." />
           <Feature icon={Layers} title="Group baskets" body="Curate token baskets with friends and track group performance over time." />
           <Feature icon={ShieldCheck} title="Trending alerts" body="Watchlist any token, get push alerts on milestones and abnormal volume." />
-          <Feature icon={Zap} title="BagsRouter SDK" body="Drop-in npm package that auto-wires fee splits at token launch — earn protocol fees forever." />
+          <Feature icon={Zap} title="PulseRouter SDK" body="Drop-in npm package that auto-wires fee splits at token launch — earn protocol fees forever." />
           <Feature icon={Sparkles} title="Fee marketplace" body="Apps and creators see accumulated fees, claim with one click, audit every split." />
           <Feature icon={ShieldCheck} title="On-chain verified" body="Every fee config rooted in the FEE2tBh… program. Fully auditable, never custodial." />
         </div>
@@ -177,7 +177,7 @@ function LandingPage() {
           <div className="relative flex flex-col lg:flex-row items-start lg:items-center gap-8 justify-between">
             <div className="max-w-xl space-y-3">
               <h3 className="text-2xl sm:text-3xl font-semibold tracking-tight">
-                Build on top of BagsRouter and earn protocol fees forever.
+                Build on top of PulseRouter and earn protocol fees forever.
               </h3>
               <p className="text-muted-foreground">
                 Wrap the official Bags SDK with our drop-in router. Every token you help

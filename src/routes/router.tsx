@@ -39,7 +39,7 @@ type Partner = {
 export const Route = createFileRoute("/router")({
   head: () => ({
     meta: [
-      { title: "BagsRouter — Fee-split protocol marketplace" },
+      { title: "PulseRouter — Fee-split protocol marketplace" },
       {
         name: "description",
         content:
@@ -89,7 +89,7 @@ function RouterPage() {
               <Shield className="h-3.5 w-3.5" /> Protocol primitive
             </div>
             <h1 className="text-4xl sm:text-5xl font-semibold tracking-tight">
-              <span className="text-gradient">BagsRouter</span> — earn fees on every token your app helps launch.
+              <span className="text-gradient">PulseRouter</span> — earn fees on every token your app helps launch.
             </h1>
             <p className="text-lg text-muted-foreground">
               The protocol-level fee-split layer for the Bags ecosystem. Drop in our SDK,
@@ -135,7 +135,7 @@ function RouterPage() {
         <h2 className="text-2xl font-semibold tracking-tight mb-8">How it works</h2>
         <div className="grid md:grid-cols-3 gap-5">
           <Step n={1} title="Register your app" body="One-time on-chain partner config (PDA). 0.1 SOL registration. Choose your fee wallet and BPS share." />
-          <Step n={2} title="Wrap the Bags SDK" body="npm install @bagsrouter/sdk. Call router.launchToken() instead of sdk.tokenLaunch directly." />
+          <Step n={2} title="Wrap the Bags SDK" body="npm install @pulserouter/sdk. Call router.launchToken() instead of sdk.tokenLaunch directly." />
           <Step n={3} title="Earn forever" body="Every token launched through you routes a permanent on-chain share of fees to your wallet. Claim anytime." />
         </div>
       </section>
@@ -155,7 +155,7 @@ function RouterPage() {
             <div className="grid sm:grid-cols-3 gap-4 text-sm">
               <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm bg-primary" /> Creator · 80% (8000 BPS)</div>
               <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm bg-accent" /> Your app · 15% (1500 BPS)</div>
-              <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm bg-chart-3" /> BagsRouter protocol · 5% (500 BPS)</div>
+              <div className="flex items-center gap-2"><span className="h-3 w-3 rounded-sm bg-chart-3" /> PulseRouter protocol · 5% (500 BPS)</div>
             </div>
             <p className="text-xs text-muted-foreground font-mono">
               Rooted in Bags fee program FEE2tBhCKAt7shrod19QttSVREUYPiyMzoku1mL1gqVK · BPS sums to 10,000
@@ -169,7 +169,7 @@ function RouterPage() {
         <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
           <div>
             <h2 className="text-2xl font-semibold tracking-tight">Partner marketplace</h2>
-            <p className="text-sm text-muted-foreground mt-1">Apps registered with BagsRouter</p>
+            <p className="text-sm text-muted-foreground mt-1">Apps registered with PulseRouter</p>
           </div>
           <Badge className="bg-primary/15 text-primary border-0">
             {loading ? "Loading…" : `${partners.length} live`}
@@ -230,7 +230,7 @@ function RouterPage() {
         <Card className="bg-gradient-to-br from-primary/10 via-card/60 to-card/60 border-primary/30">
           <CardContent className="p-8 grid md:grid-cols-3 gap-6">
             {[
-              { t: "Protocol revenue", b: "5% of every fee from every token launched through BagsRouter — on-chain MRR." },
+              { t: "Protocol revenue", b: "5% of every fee from every token launched through PulseRouter — on-chain MRR." },
               { t: "Network effects", b: "Every dev that builds on us drives more on-chain volume — judged directly by Bags." },
               { t: "Deepest integration", b: "We don't read fees, we wrap the entire launch flow at the protocol layer." },
             ].map((x) => (
@@ -289,17 +289,17 @@ function RegisterPartnerDialog({
       toast.error(error.message);
       return;
     }
-    toast.success(`${appName} registered with BagsRouter`);
+    toast.success(`${appName} registered with PulseRouter`);
     onSuccess();
   }
 
   return (
     <DialogContent className="sm:max-w-lg">
       <DialogHeader>
-        <DialogTitle>Register your app with BagsRouter</DialogTitle>
+        <DialogTitle>Register your app with PulseRouter</DialogTitle>
         <DialogDescription>
           Reserve your protocol slot. Your fee wallet will be auto-inserted into every
-          token launched through the BagsRouter SDK.
+          token launched through the PulseRouter SDK.
         </DialogDescription>
       </DialogHeader>
       <form onSubmit={handleSubmit} className="space-y-4">

@@ -29,7 +29,11 @@ export function WalletProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  if (!ready || !appId) {
+  if (!ready) {
+    return null;
+  }
+
+  if (!appId) {
     // Privy not configured — render children plainly so the app still works.
     // The `useWallet` hook returns `configured: false` and shows a CTA.
     return <>{children}</>;
@@ -50,7 +54,7 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         embeddedWallets: {
           solana: { createOnLogin: "users-without-wallets" },
         },
-        loginMethods: ["wallet", "email"],
+        loginMethods: ["wallet", "email", "google"],
       }}
     >
       {children}

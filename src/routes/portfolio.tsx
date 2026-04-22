@@ -3,7 +3,7 @@ import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fetchTokens } from "@/server/bags";
-import type { Token } from "@/lib/sample-data";
+import type { Token } from "@/server/bags";
 import { formatNumber, formatPct, formatUsd, shortAddress } from "@/lib/format";
 import { Plus, Users, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -40,7 +40,7 @@ function PortfolioPage() {
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">My portfolio</h1>
             <p className="text-muted-foreground text-sm mt-1">
-              Demo view — connect a Solana wallet to see your real holdings.
+              Connect a Solana wallet to track your Bags ecosystem holdings.
             </p>
           </div>
           <Button className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground">
