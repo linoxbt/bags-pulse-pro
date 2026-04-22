@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { MarketTicker } from "@/components/MarketTicker";
@@ -36,26 +37,18 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  loader: async () => {
-    try {
-      return await Promise.race([
-        fetchTokens(),
-        new Promise<{ tokens: never[]; live: boolean }>((resolve) =>
-          setTimeout(() => resolve({ tokens: [], live: false }), 5000),
-        ),
-      ]);
-    } catch {
-      return { tokens: [], live: false };
-    }
-  },
   component: LandingPage,
 });
 
 function LandingPage() {
-  const { tokens, live } = Route.useLoaderData() as {
-    tokens: import("@/server/bags").Token[];
-    live: boolean;
-  };
+  const [tokens, setTokens] = useState<import("@/server/bags").Token[]>([]);
+  const [live, setLive] = useState(false);
+  useEffect(() => {
+    fetchTokens().then((d) => {
+      setTokens(d.tokens);
+      setLive(d.live);
+    }).catch(() => {});
+  }, []);
   const top = tokens.slice(0, 6);
   const totalMcap = tokens.reduce((s, t) => s + t.marketCap, 0);
   const totalVol = tokens.reduce((s, t) => s + t.volume24h, 0);
