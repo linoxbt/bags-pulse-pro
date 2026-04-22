@@ -77,27 +77,7 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
       });
 
       if (!transaction) {
-        // Fallback: simulate the claim locally and record it
-        const { data: { user } } = await supabase.auth.getUser();
-        for (const mint of mints) {
-          const pos = positions.find((p) => p.mint === mint)!;
-          if (user) {
-            await recordFeeClaim({
-              data: {
-                wallet: wallet.address,
-                mint: pos.mint,
-                symbol: pos.symbol,
-                amount: pos.amount,
-                amountUsd: pos.amountUsd,
-                txSignature: `sim_${Date.now()}_${pos.mint}`,
-              },
-            });
-          }
-        }
-        toast.success(`Simulated claim of ${formatUsd(total)}`, {
-          description: error ?? "On-chain claim unavailable — recorded as simulation",
-        });
-        onOpenChange(false);
+        toast.error("On-chain claim unavailable", { description: error ?? "Bags did not return a claim transaction." });
         setClaiming(false);
         return;
       }

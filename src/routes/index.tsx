@@ -42,7 +42,7 @@ export const Route = createFileRoute("/")({
 
 function LandingPage() {
   const { tokens, live } = Route.useLoaderData() as {
-    tokens: import("@/lib/sample-data").Token[];
+    tokens: import("@/server/bags").Token[];
     live: boolean;
   };
   const top = tokens.slice(0, 6);

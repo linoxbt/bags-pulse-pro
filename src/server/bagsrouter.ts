@@ -26,8 +26,7 @@ async function bagsFetch(path: string): Promise<unknown | null> {
   }
 }
 
-// Get all claimable fee positions for a wallet.
-// Falls back to a deterministic sample so the UI shows real claim mechanics.
+// Get all claimable fee positions for a wallet from the live Bags fee program.
 export const getClaimablePositions = createServerFn({ method: "POST" })
   .inputValidator((d: { wallet: string }) => d)
   .handler(async ({ data }): Promise<{ positions: ClaimablePosition[]; live: boolean }> => {
