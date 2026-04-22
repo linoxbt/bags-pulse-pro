@@ -1,10 +1,16 @@
-import { getSampleTokens } from "@/lib/sample-data";
+import { useEffect, useState } from "react";
+import { fetchTokens, type Token } from "@/server/bags";
 import { formatPct, formatUsd } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 export function MarketTicker() {
-  // Tiny client-side ticker using sample data — replaced by live in dashboard
-  const tokens = getSampleTokens().slice(0, 12);
+  const [tokens, setTokens] = useState<Token[]>([]);
+
+  useEffect(() => {
+    fetchTokens().then((res) => setTokens(res.tokens.slice(0, 12))).catch(() => setTokens([]));
+  }, []);
+
+  if (tokens.length === 0) return null;
   const items = [...tokens, ...tokens];
   return (
     <div className="overflow-hidden border-y border-border/60 bg-surface/40">
