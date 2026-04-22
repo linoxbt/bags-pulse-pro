@@ -28,7 +28,9 @@ export const recordFeeSplit = createServerFn({ method: "POST" })
   .inputValidator((d: FeeSplitRecord) => d)
   .handler(async ({ data }) => {
     const split = computeSplit(data.total_lamports);
-    const { error } = await supabaseAdmin.from("fee_splits").insert({
+    const { error } = await (supabaseAdmin.from("fee_splits") as never as {
+      insert: (row: Record<string, unknown>) => Promise<{ error: { message: string } | null }>;
+    }).insert({
       source_tx: data.source_tx,
       source: data.source,
       total_lamports: data.total_lamports,
@@ -46,8 +48,13 @@ export const recordFeeSplit = createServerFn({ method: "POST" })
   });
 
 export const getFeeSplitStats = createServerFn({ method: "GET" }).handler(async () => {
-  const { data } = await supabaseAdmin
-    .from("fee_splits")
+  const { data } = await (supabaseAdmin.from("fee_splits") as never as {
+    select: (cols: string) => {
+      order: (c: string, o: { ascending: boolean }) => {
+        limit: (n: number) => Promise<{ data: Array<Record<string, number | string>> | null }>;
+      };
+    };
+  })
     .select("total_lamports,creator_lamports,platform_lamports,treasury_lamports,source,created_at")
     .order("created_at", { ascending: false })
     .limit(100);
