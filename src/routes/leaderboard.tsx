@@ -1,11 +1,12 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { fetchTokens } from "@/server/bags";
 import { formatNumber, formatPct, formatUsd } from "@/lib/format";
-import type { Token } from "@/lib/sample-data";
+import type { Token } from "@/server/bags";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Search, Star } from "lucide-react";
@@ -26,6 +27,7 @@ type SortKey = "marketCap" | "volume24h" | "holders" | "feesEarned24h" | "change
 function LeaderboardPage() {
   const data = Route.useLoaderData() as { tokens: Token[]; live: boolean };
   const [q, setQ] = useState("");
+  const navigate = useNavigate();
   const [sortKey, setSortKey] = useState<SortKey>("marketCap");
 
   const filtered = useMemo(() => {
@@ -64,7 +66,7 @@ function LeaderboardPage() {
                 </TabsList>
                 <TabsContent value={sortKey} />
               </Tabs>
-              <div className="relative w-full sm:w-72">
+              <form className="relative flex w-full gap-2 sm:w-96" onSubmit={(e) => { e.preventDefault(); if (filtered[0]) navigate({ to: "/token/$mint", params: { mint: filtered[0].mint } }); }}>
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={q}
@@ -72,7 +74,8 @@ function LeaderboardPage() {
                   placeholder="Search token, creator…"
                   className="pl-9 bg-background/40"
                 />
-              </div>
+                <Button type="submit" variant="outline">Search</Button>
+              </form>
             </div>
           </CardHeader>
           <CardContent className="p-0">
@@ -99,14 +102,14 @@ function LeaderboardPage() {
                         <div className="flex items-center gap-2.5">
                           <img src={t.image} alt="" className="h-9 w-9 rounded-md ring-1 ring-border" loading="lazy" />
                           <div className="min-w-0">
-                            <p className="font-medium flex items-center gap-1">
+                            <Link to="/token/$mint" params={{ mint: t.mint }} className="font-medium flex items-center gap-1 hover:text-primary">
                               ${t.symbol}
                               {t.graduated && (
                                 <span className="text-[10px] font-mono uppercase rounded bg-accent/15 text-accent px-1 py-0.5">
                                   graduated
                                 </span>
                               )}
-                            </p>
+                            </Link>
                             <p className="text-xs text-muted-foreground truncate max-w-[180px]">{t.name}</p>
                           </div>
                         </div>
