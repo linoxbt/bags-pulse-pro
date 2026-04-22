@@ -36,7 +36,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Live leaderboards, creator scorecards, portfolio tracking and the BagsRouter fee-split protocol for the Bags.fm ecosystem.",
+          "Live leaderboards, creator scorecards, portfolio tracking and the PulseRouter fee-split protocol for the Bags.fm ecosystem.",
       },
       { name: "author", content: "BagsPulse" },
       { property: "og:title", content: "BagsPulse — Social finance for Bags.fm" },

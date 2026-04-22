@@ -9,7 +9,7 @@ export function SiteFooter() {
           <BagsPulseLogo />
           <p className="text-sm text-muted-foreground max-w-sm">
             The social finance super-dashboard for the Bags ecosystem. Live
-            leaderboards, creator scorecards, portfolios and the BagsRouter
+            leaderboards, creator scorecards, portfolios and the PulseRouter
             fee-split protocol — all in one place.
           </p>
         </div>
@@ -22,7 +22,7 @@ export function SiteFooter() {
         </div>
         <div className="space-y-2 text-sm">
           <p className="font-semibold mb-3">Protocol</p>
-          <Link to="/router" className="block text-muted-foreground hover:text-foreground">BagsRouter</Link>
+          <Link to="/router" className="block text-muted-foreground hover:text-foreground">PulseRouter</Link>
           <Link to="/docs" className="block text-muted-foreground hover:text-foreground">Developer docs</Link>
           <Link to="/pricing" className="block text-muted-foreground hover:text-foreground">Pricing</Link>
         </div>
