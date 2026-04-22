@@ -9,7 +9,7 @@ import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "rec
 import { ArrowDownRight, ArrowUpRight, Flame, GraduationCap, Megaphone, Radio, Rocket, Sparkles, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLiveSlot } from "@/hooks/useLiveSlot";
-import { ConnectWallet } from "@/components/ConnectWallet";
+
 import { useLiveBagsFeed } from "@/hooks/useLiveBagsFeed";
 
 export const Route = createFileRoute("/dashboard")({
@@ -57,7 +57,6 @@ function DashboardPage() {
               </span>
             </p>
           </div>
-          <ConnectWallet size="default" />
         </div>
 
         {/* KPIs */}

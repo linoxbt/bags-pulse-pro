@@ -20,6 +20,9 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TokenMintRouteImport } from './routes/token.$mint'
 import { Route as ApiMcpRouteImport } from './routes/api.mcp'
+import { Route as ApiLicensesConfirmRouteImport } from './routes/api.licenses.confirm'
+import { Route as ApiActionsSubscribeRouteImport } from './routes/api.actions.subscribe'
+import { Route as ApiPublicAgentRunRouteImport } from './routes/api.public.agent.run'
 
 const RouterRoute = RouterRouteImport.update({
   id: '/router',
@@ -76,6 +79,21 @@ const ApiMcpRoute = ApiMcpRouteImport.update({
   path: '/api/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiLicensesConfirmRoute = ApiLicensesConfirmRouteImport.update({
+  id: '/api/licenses/confirm',
+  path: '/api/licenses/confirm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiActionsSubscribeRoute = ApiActionsSubscribeRouteImport.update({
+  id: '/api/actions/subscribe',
+  path: '/api/actions/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicAgentRunRoute = ApiPublicAgentRunRouteImport.update({
+  id: '/api/public/agent/run',
+  path: '/api/public/agent/run',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +107,9 @@ export interface FileRoutesByFullPath {
   '/router': typeof RouterRoute
   '/api/mcp': typeof ApiMcpRoute
   '/token/$mint': typeof TokenMintRoute
+  '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
+  '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
+  '/api/public/agent/run': typeof ApiPublicAgentRunRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +123,9 @@ export interface FileRoutesByTo {
   '/router': typeof RouterRoute
   '/api/mcp': typeof ApiMcpRoute
   '/token/$mint': typeof TokenMintRoute
+  '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
+  '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
+  '/api/public/agent/run': typeof ApiPublicAgentRunRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +140,9 @@ export interface FileRoutesById {
   '/router': typeof RouterRoute
   '/api/mcp': typeof ApiMcpRoute
   '/token/$mint': typeof TokenMintRoute
+  '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
+  '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
+  '/api/public/agent/run': typeof ApiPublicAgentRunRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +158,9 @@ export interface FileRouteTypes {
     | '/router'
     | '/api/mcp'
     | '/token/$mint'
+    | '/api/actions/subscribe'
+    | '/api/licenses/confirm'
+    | '/api/public/agent/run'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +174,9 @@ export interface FileRouteTypes {
     | '/router'
     | '/api/mcp'
     | '/token/$mint'
+    | '/api/actions/subscribe'
+    | '/api/licenses/confirm'
+    | '/api/public/agent/run'
   id:
     | '__root__'
     | '/'
@@ -157,6 +190,9 @@ export interface FileRouteTypes {
     | '/router'
     | '/api/mcp'
     | '/token/$mint'
+    | '/api/actions/subscribe'
+    | '/api/licenses/confirm'
+    | '/api/public/agent/run'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +207,9 @@ export interface RootRouteChildren {
   RouterRoute: typeof RouterRoute
   ApiMcpRoute: typeof ApiMcpRoute
   TokenMintRoute: typeof TokenMintRoute
+  ApiActionsSubscribeRoute: typeof ApiActionsSubscribeRoute
+  ApiLicensesConfirmRoute: typeof ApiLicensesConfirmRoute
+  ApiPublicAgentRunRoute: typeof ApiPublicAgentRunRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +291,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiMcpRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/licenses/confirm': {
+      id: '/api/licenses/confirm'
+      path: '/api/licenses/confirm'
+      fullPath: '/api/licenses/confirm'
+      preLoaderRoute: typeof ApiLicensesConfirmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/actions/subscribe': {
+      id: '/api/actions/subscribe'
+      path: '/api/actions/subscribe'
+      fullPath: '/api/actions/subscribe'
+      preLoaderRoute: typeof ApiActionsSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/agent/run': {
+      id: '/api/public/agent/run'
+      path: '/api/public/agent/run'
+      fullPath: '/api/public/agent/run'
+      preLoaderRoute: typeof ApiPublicAgentRunRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +327,9 @@ const rootRouteChildren: RootRouteChildren = {
   RouterRoute: RouterRoute,
   ApiMcpRoute: ApiMcpRoute,
   TokenMintRoute: TokenMintRoute,
+  ApiActionsSubscribeRoute: ApiActionsSubscribeRoute,
+  ApiLicensesConfirmRoute: ApiLicensesConfirmRoute,
+  ApiPublicAgentRunRoute: ApiPublicAgentRunRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
