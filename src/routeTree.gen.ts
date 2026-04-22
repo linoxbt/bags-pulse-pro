@@ -19,6 +19,7 @@ import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TokenMintRouteImport } from './routes/token.$mint'
+import { Route as ApiMcpRouteImport } from './routes/api.mcp'
 
 const RouterRoute = RouterRouteImport.update({
   id: '/router',
@@ -70,6 +71,11 @@ const TokenMintRoute = TokenMintRouteImport.update({
   path: '/token/$mint',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiMcpRoute = ApiMcpRouteImport.update({
+  id: '/api/mcp',
+  path: '/api/mcp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -81,6 +87,7 @@ export interface FileRoutesByFullPath {
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/token/$mint': typeof TokenMintRoute
 }
 export interface FileRoutesByTo {
@@ -93,6 +100,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/token/$mint': typeof TokenMintRoute
 }
 export interface FileRoutesById {
@@ -106,6 +114,7 @@ export interface FileRoutesById {
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
+  '/api/mcp': typeof ApiMcpRoute
   '/token/$mint': typeof TokenMintRoute
 }
 export interface FileRouteTypes {
@@ -120,6 +129,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/router'
+    | '/api/mcp'
     | '/token/$mint'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/router'
+    | '/api/mcp'
     | '/token/$mint'
   id:
     | '__root__'
@@ -144,6 +155,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/router'
+    | '/api/mcp'
     | '/token/$mint'
   fileRoutesById: FileRoutesById
 }
@@ -157,6 +169,7 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
   RouterRoute: typeof RouterRoute
+  ApiMcpRoute: typeof ApiMcpRoute
   TokenMintRoute: typeof TokenMintRoute
 }
 
@@ -232,6 +245,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TokenMintRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/mcp': {
+      id: '/api/mcp'
+      path: '/api/mcp'
+      fullPath: '/api/mcp'
+      preLoaderRoute: typeof ApiMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -245,17 +265,9 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
   RouterRoute: RouterRoute,
+  ApiMcpRoute: ApiMcpRoute,
   TokenMintRoute: TokenMintRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}
