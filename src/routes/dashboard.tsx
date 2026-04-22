@@ -7,8 +7,10 @@ import { cn } from "@/lib/utils";
 import type { FeedEvent, Token } from "@/lib/sample-data";
 import { buildPriceSeries } from "@/lib/sample-data";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { ArrowDownRight, ArrowUpRight, Flame, GraduationCap, Megaphone, Rocket, Sparkles, Wallet } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Flame, GraduationCap, Megaphone, Radio, Rocket, Sparkles, Wallet } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useLiveSlot } from "@/hooks/useLiveSlot";
+import { ConnectWallet } from "@/components/ConnectWallet";
 
 export const Route = createFileRoute("/dashboard")({
   head: () => ({
@@ -35,6 +37,7 @@ function DashboardPage() {
   const totalHolders = tokens.tokens.reduce((s, t) => s + t.holders, 0);
   const top = [...tokens.tokens].sort((a, b) => b.marketCap - a.marketCap).slice(0, 8);
   const series = buildPriceSeries(11, 60);
+  const { slot, live: wsLive } = useLiveSlot();
 
   return (
     <PageShell>
@@ -42,17 +45,18 @@ function DashboardPage() {
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="text-3xl font-semibold tracking-tight">Ecosystem dashboard</h1>
-            <p className="text-muted-foreground mt-1 text-sm">
-              {tokens.live ? "Live data from Bags REST API" : "Curated demo data — connect API key for live"} ·{" "}
-              <span className="font-mono">{tokens.tokens.length} tokens tracked</span>
+            <p className="text-muted-foreground mt-1 text-sm flex items-center gap-2 flex-wrap">
+              <span>{tokens.live ? "Live from Bags REST API" : "Curated demo data"}</span>
+              <span>·</span>
+              <span className="font-mono">{tokens.tokens.length} tokens</span>
+              <span>·</span>
+              <span className={cn("inline-flex items-center gap-1.5 font-mono", wsLive ? "text-success" : "text-muted-foreground")}>
+                <Radio className={cn("h-3 w-3", wsLive && "pulse-ring")} />
+                {wsLive ? `slot ${slot ?? "…"}` : "Helius offline"}
+              </span>
             </p>
           </div>
-          <Link
-            to="/portfolio"
-            className="inline-flex items-center gap-2 rounded-md bg-secondary px-3 py-1.5 text-sm hover:bg-secondary/70"
-          >
-            <Wallet className="h-4 w-4" /> Connect wallet
-          </Link>
+          <ConnectWallet size="default" />
         </div>
 
         {/* KPIs */}
@@ -69,7 +73,7 @@ function DashboardPage() {
             <CardHeader className="flex flex-row items-center justify-between border-b border-border/50">
               <CardTitle className="text-base">Ecosystem volume — last 24h</CardTitle>
               <Badge variant="secondary" className="bg-primary/15 text-primary border-0">
-                +{(Math.random() * 12 + 4).toFixed(1)}% vs prev day
+                +8.4% vs prev day
               </Badge>
             </CardHeader>
             <CardContent className="p-4 h-[300px]">
