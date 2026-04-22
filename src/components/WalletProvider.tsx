@@ -18,22 +18,22 @@ export function WalletProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     let cancelled = false;
-    Promise.all([getPrivyConfig(), getHeliusEndpoints()]).then(([cfg, ep]) => {
-      if (cancelled) return;
-      setAppId(cfg.appId);
-      setEndpoints(ep);
-      setReady(true);
-    });
+    Promise.all([getPrivyConfig(), getHeliusEndpoints()])
+      .then(([cfg, ep]) => {
+        if (cancelled) return;
+        setAppId(cfg.appId);
+        setEndpoints(ep);
+        setReady(true);
+      })
+      .catch(() => {
+        if (!cancelled) setReady(true);
+      });
     return () => {
       cancelled = true;
     };
   }, []);
 
-  if (!ready) {
-    return null;
-  }
-
-  if (!appId) {
+  if (!ready || !appId) {
     // Privy not configured — render children plainly so the app still works.
     // The `useWallet` hook returns `configured: false` and shows a CTA.
     return <>{children}</>;
