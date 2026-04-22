@@ -36,10 +36,10 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Live leaderboards, creator scorecards, portfolio tracking and the PulseRouter fee-split protocol for the Bags.fm ecosystem.",
+          "Live leaderboards, creator scorecards, portfolio tracking and the BagsRouter fee-split protocol for the Bags.fm ecosystem.",
       },
       { name: "author", content: "BagsPulse" },
-      { property: "og:title", content: "BagsPulse — Social finance for Bags.fm" },
+      { property: "og:title", content: "BagsPulse — Social finance super-dashboard for Bags.fm" },
       {
         property: "og:description",
         content:
@@ -47,6 +47,12 @@ export const Route = createRootRoute({
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "BagsPulse — Social finance super-dashboard for Bags.fm" },
+      { name: "description", content: "BagsPulse: A social finance dashboard and protocol for the Bags ecosystem." },
+      { property: "og:description", content: "BagsPulse: A social finance dashboard and protocol for the Bags ecosystem." },
+      { name: "twitter:description", content: "BagsPulse: A social finance dashboard and protocol for the Bags ecosystem." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/74cce162-61a6-4ac6-921a-9fa77e58cade/id-preview-1e8e1b03--7a4daa2d-428f-4a7f-bbde-1776f8df7039.lovable.app-1776867507047.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/74cce162-61a6-4ac6-921a-9fa77e58cade/id-preview-1e8e1b03--7a4daa2d-428f-4a7f-bbde-1776f8df7039.lovable.app-1776867507047.png" },
     ],
     links: [{ rel: "stylesheet", href: appCss }],
   }),
