@@ -36,7 +36,18 @@ export const Route = createFileRoute("/")({
       },
     ],
   }),
-  loader: () => fetchTokens(),
+  loader: async () => {
+    try {
+      return await Promise.race([
+        fetchTokens(),
+        new Promise<{ tokens: never[]; live: boolean }>((resolve) =>
+          setTimeout(() => resolve({ tokens: [], live: false }), 5000),
+        ),
+      ]);
+    } catch {
+      return { tokens: [], live: false };
+    }
+  },
   component: LandingPage,
 });
 
