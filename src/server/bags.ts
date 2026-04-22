@@ -40,21 +40,22 @@ export type FeedEvent = {
 
 async function bagsFetch(path: string): Promise<unknown | null> {
   const apiKey = process.env.BAGS_API_KEY;
-  if (!apiKey) throw new Error("Bags API key is not configured");
+  if (!apiKey) {
+    console.warn(`[bags] BAGS_API_KEY missing, skipping ${path}`);
+    return null;
+  }
   try {
     const res = await fetch(`${BAGS_BASE}${path}`, {
-      headers: {
-        "x-api-key": apiKey,
-        accept: "application/json",
-      },
+      headers: { "x-api-key": apiKey, accept: "application/json" },
     });
     if (!res.ok) {
-      throw new Error(`Bags API ${path} returned ${res.status}`);
+      console.error(`[bags] ${path} returned ${res.status}`);
+      return null;
     }
     return await res.json();
   } catch (err) {
     console.error(`[bags] ${path} failed`, err);
-    throw err;
+    return null;
   }
 }
 
