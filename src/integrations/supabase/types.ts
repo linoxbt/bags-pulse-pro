@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      agent_proposals: {
+        Row: {
+          actions: Json
+          basket_id: string
+          created_at: string
+          decided_at: string | null
+          decided_by: string | null
+          id: string
+          model: string
+          proposal_type: string
+          reasoning: string
+          status: string
+        }
+        Insert: {
+          actions?: Json
+          basket_id: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          model: string
+          proposal_type?: string
+          reasoning: string
+          status?: string
+        }
+        Update: {
+          actions?: Json
+          basket_id?: string
+          created_at?: string
+          decided_at?: string | null
+          decided_by?: string | null
+          id?: string
+          model?: string
+          proposal_type?: string
+          reasoning?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "agent_proposals_basket_id_fkey"
+            columns: ["basket_id"]
+            isOneToOne: false
+            referencedRelation: "baskets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       basket_members: {
         Row: {
           basket_id: string
@@ -156,6 +203,54 @@ export type Database = {
         }
         Relationships: []
       }
+      fee_splits: {
+        Row: {
+          created_at: string
+          creator_bps: number
+          creator_lamports: number
+          creator_wallet: string | null
+          id: string
+          metadata: Json
+          platform_bps: number
+          platform_lamports: number
+          source: string
+          source_tx: string
+          total_lamports: number
+          treasury_bps: number
+          treasury_lamports: number
+        }
+        Insert: {
+          created_at?: string
+          creator_bps?: number
+          creator_lamports?: number
+          creator_wallet?: string | null
+          id?: string
+          metadata?: Json
+          platform_bps?: number
+          platform_lamports?: number
+          source: string
+          source_tx: string
+          total_lamports: number
+          treasury_bps?: number
+          treasury_lamports?: number
+        }
+        Update: {
+          created_at?: string
+          creator_bps?: number
+          creator_lamports?: number
+          creator_wallet?: string | null
+          id?: string
+          metadata?: Json
+          platform_bps?: number
+          platform_lamports?: number
+          source?: string
+          source_tx?: string
+          total_lamports?: number
+          treasury_bps?: number
+          treasury_lamports?: number
+        }
+        Relationships: []
+      }
       partner_registry: {
         Row: {
           app_id: string
@@ -231,6 +326,51 @@ export type Database = {
           updated_at?: string
           user_id?: string
           wallet_address?: string | null
+        }
+        Relationships: []
+      }
+      strategy_licenses: {
+        Row: {
+          amount_paid: number
+          cnft_asset_id: string | null
+          cnft_mint: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          payment_token: string
+          payment_tx: string
+          status: string
+          strategy_id: string
+          user_id: string
+          wallet_address: string
+        }
+        Insert: {
+          amount_paid?: number
+          cnft_asset_id?: string | null
+          cnft_mint?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          payment_token?: string
+          payment_tx: string
+          status?: string
+          strategy_id: string
+          user_id: string
+          wallet_address: string
+        }
+        Update: {
+          amount_paid?: number
+          cnft_asset_id?: string | null
+          cnft_mint?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          payment_token?: string
+          payment_tx?: string
+          status?: string
+          strategy_id?: string
+          user_id?: string
+          wallet_address?: string
         }
         Relationships: []
       }
