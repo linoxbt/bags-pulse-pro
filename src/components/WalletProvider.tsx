@@ -13,7 +13,7 @@ const FALLBACK_ENDPOINTS: Endpoints = {
 
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [appId, setAppId] = useState<string | null>(null);
-  const [endpoints, setEndpoints] = useState<Endpoints>(FALLBACK_ENDPOINTS);
+  const [, setEndpoints] = useState<Endpoints>(FALLBACK_ENDPOINTS);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
@@ -30,8 +30,8 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   if (!ready || !appId) {
-    // Privy not configured yet — render children without provider so the app
-    // still works. Wallet UI shows a "configure Privy" call to action.
+    // Privy not configured — render children plainly so the app still works.
+    // The `useWallet` hook returns `configured: false` and shows a CTA.
     return <>{children}</>;
   }
 
@@ -42,7 +42,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
         appearance: {
           theme: "dark",
           accentColor: "#10b981",
-          logo: undefined,
           walletChainType: "solana-only",
         },
         externalWallets: {
@@ -52,12 +51,6 @@ export function WalletProvider({ children }: { children: ReactNode }) {
           solana: { createOnLogin: "users-without-wallets" },
         },
         loginMethods: ["wallet", "email"],
-        solanaClusters: [
-          {
-            name: "mainnet-beta",
-            rpcUrl: endpoints.rpc,
-          },
-        ],
       }}
     >
       {children}
