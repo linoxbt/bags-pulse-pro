@@ -1,7 +1,6 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { BagsPulseLogo } from "./BagsPulseLogo";
 import { Button } from "./ui/button";
-import { ConnectWallet } from "./ConnectWallet";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import { useState } from "react";
@@ -44,10 +43,9 @@ export function SiteHeader() {
           })}
         </nav>
         <div className="flex items-center gap-2">
-          <Button asChild variant="ghost" size="sm" className="hidden sm:inline-flex">
+          <Button asChild size="sm" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground">
             <Link to="/auth">Sign in</Link>
           </Button>
-          <ConnectWallet />
           <button
             onClick={() => setOpen((o) => !o)}
             className="lg:hidden rounded-md p-2 text-muted-foreground hover:bg-secondary"
