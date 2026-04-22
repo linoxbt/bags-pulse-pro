@@ -1,26 +1,35 @@
+// Custom compact formatter that's deterministic across SSR/client.
+// Native Intl `compact` differs between Node ICU and browser ICU
+// (e.g. "$32.4M" vs "$32.40M"), causing hydration mismatches.
+
+function compactNumber(n: number, fractionDigits = 2): string {
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1_000_000_000) return `${sign}${(abs / 1_000_000_000).toFixed(fractionDigits).replace(/\.?0+$/, "")}B`;
+  if (abs >= 1_000_000) return `${sign}${(abs / 1_000_000).toFixed(fractionDigits).replace(/\.?0+$/, "")}M`;
+  if (abs >= 1_000) return `${sign}${(abs / 1_000).toFixed(fractionDigits).replace(/\.?0+$/, "")}K`;
+  return `${sign}${abs.toFixed(abs < 1 ? Math.min(6, fractionDigits + 4) : 0)}`;
+}
+
 export function formatUsd(n: number, opts: { compact?: boolean } = {}) {
   if (n == null || isNaN(n)) return "$0";
   if (opts.compact) {
-    return new Intl.NumberFormat("en-US", {
-      notation: "compact",
-      maximumFractionDigits: 2,
-      style: "currency",
-      currency: "USD",
-    }).format(n);
+    return `$${compactNumber(n, 2)}`;
   }
-  return new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: n < 1 ? 6 : 2,
-  }).format(n);
+  // Standard USD with explicit fraction control (Node + browser identical)
+  const abs = Math.abs(n);
+  const fractionDigits = abs < 1 ? 6 : 2;
+  const formatted = abs.toLocaleString("en-US", {
+    minimumFractionDigits: fractionDigits === 6 ? 2 : 2,
+    maximumFractionDigits: fractionDigits,
+  });
+  return `${n < 0 ? "-" : ""}$${formatted}`;
 }
 
 export function formatNumber(n: number, compact = true) {
   if (n == null || isNaN(n)) return "0";
-  return new Intl.NumberFormat("en-US", {
-    notation: compact ? "compact" : "standard",
-    maximumFractionDigits: 2,
-  }).format(n);
+  if (compact) return compactNumber(n, 2);
+  return Math.round(n).toLocaleString("en-US");
 }
 
 export function formatPct(n: number) {
@@ -31,6 +40,7 @@ export function formatPct(n: number) {
 
 export function shortAddress(addr: string) {
   if (!addr) return "";
+  if (addr.length <= 10) return addr;
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 

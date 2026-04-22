@@ -4,9 +4,11 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { fetchTokens } from "@/server/bags";
 import type { Token } from "@/lib/sample-data";
-import { formatNumber, formatPct, formatUsd } from "@/lib/format";
+import { formatNumber, formatPct, formatUsd, shortAddress } from "@/lib/format";
 import { Plus, Users, Wallet, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConnectWallet } from "@/components/ConnectWallet";
+import { useWallet } from "@/hooks/useWallet";
 
 export const Route = createFileRoute("/portfolio")({
   head: () => ({
