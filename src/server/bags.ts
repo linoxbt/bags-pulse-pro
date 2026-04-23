@@ -64,13 +64,15 @@ function fallbackTokens(): Token[] {
   return getSampleTokens().map((token) => ({ ...token, description: "", website: null, twitter: null, status: null, dbcPoolKey: null, dammV2PoolKey: null }));
 }
 
+const FALLBACK_TOKENS = fallbackTokens();
+
 function fallbackFeed(): FeedEvent[] {
   return getSampleFeed().map((event, index) => ({
     id: event.id,
     type: event.type,
     token: event.token,
     symbol: event.symbol,
-    mint: fallbackTokens()[index % fallbackTokens().length]?.mint ?? `sample-${index}`,
+    mint: FALLBACK_TOKENS[index % FALLBACK_TOKENS.length]?.mint ?? `sample-${index}`,
     amountUsd: event.amountUsd,
     actor: event.actor,
     message: event.message,
@@ -161,7 +163,7 @@ export const fetchTokens = createServerFn({ method: "GET" }).handler(
     if (normalized.length > 0) {
       return { tokens: normalized, live: true };
     }
-    return { tokens: fallbackTokens(), live: false };
+    return { tokens: FALLBACK_TOKENS, live: false };
   },
 );
 
@@ -195,7 +197,7 @@ export const fetchTokenDetail = createServerFn({ method: "GET" })
     const feed = unwrapList(await bagsFetch("/token-launch/feed").catch(() => null));
     const launch = feed.map(normalizeToken).find((t) => t.mint === data.mint);
     if (!pool && !launch) {
-      const fallback = fallbackTokens().find((t) => t.mint === data.mint) ?? null;
+      const fallback = FALLBACK_TOKENS.find((t) => t.mint === data.mint) ?? null;
       return { token: fallback, live: false };
     }
     let token = { ...(pool ? normalizeToken(asRecord(pool).response ?? pool) : normalizeToken(launch)), ...(launch ?? {}) };
