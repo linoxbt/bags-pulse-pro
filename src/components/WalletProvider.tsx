@@ -1,63 +1,38 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { PrivyProvider } from "@privy-io/react-auth";
-import { toSolanaWalletConnectors } from "@privy-io/react-auth/solana";
-import { getPrivyConfig, getHeliusEndpoints } from "@/server/helius";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ConnectionProvider, WalletProvider as SolanaWalletProvider } from "@solana/wallet-adapter-react";
+import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
+import { PhantomWalletAdapter } from "@solana/wallet-adapter-phantom";
+import { SolflareWalletAdapter } from "@solana/wallet-adapter-solflare";
+import { BackpackWalletAdapter } from "@solana/wallet-adapter-backpack";
+import { getHeliusEndpoints } from "@/server/helius";
+import "@solana/wallet-adapter-react-ui/styles.css";
 
-type Endpoints = { rpc: string; ws: string; live: boolean };
-
-const FALLBACK_ENDPOINTS: Endpoints = {
-  rpc: "https://api.mainnet-beta.solana.com",
-  ws: "wss://api.mainnet-beta.solana.com",
-  live: false,
-};
+const FALLBACK_RPC = "https://api.mainnet-beta.solana.com";
 
 export function WalletProvider({ children }: { children: ReactNode }) {
-  const [appId, setAppId] = useState<string | null>(null);
-  const [, setEndpoints] = useState<Endpoints>(FALLBACK_ENDPOINTS);
-  const [ready, setReady] = useState(false);
+  const [rpc, setRpc] = useState<string>(FALLBACK_RPC);
+  const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
-    Promise.all([getPrivyConfig(), getHeliusEndpoints()])
-      .then(([cfg, ep]) => {
-        if (cancelled) return;
-        setAppId(cfg.appId);
-        setEndpoints(ep);
-        setReady(true);
-      })
-      .catch(() => {
-        if (!cancelled) setReady(true);
-      });
-    return () => {
-      cancelled = true;
-    };
+    setMounted(true);
+    getHeliusEndpoints()
+      .then((ep) => setRpc(ep.rpc))
+      .catch(() => {});
   }, []);
 
-  if (!ready || !appId) {
-    // Privy not configured — render children plainly so the app still works.
-    // The `useWallet` hook returns `configured: false` and shows a CTA.
-    return <>{children}</>;
-  }
+  const wallets = useMemo(
+    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()],
+    [],
+  );
+
+  // SSR-safe: render children plainly until client mount, then mount the providers.
+  if (!mounted) return <>{children}</>;
 
   return (
-    <PrivyProvider
-      appId={appId}
-      config={{
-        appearance: {
-          theme: "dark",
-          accentColor: "#10b981",
-          walletChainType: "solana-only",
-        },
-        externalWallets: {
-          solana: { connectors: toSolanaWalletConnectors() },
-        },
-        embeddedWallets: {
-          solana: { createOnLogin: "users-without-wallets" },
-        },
-        loginMethods: ["wallet", "email", "google"],
-      }}
-    >
-      {children}
-    </PrivyProvider>
+    <ConnectionProvider endpoint={rpc}>
+      <SolanaWalletProvider wallets={wallets} autoConnect>
+        <WalletModalProvider>{children}</WalletModalProvider>
+      </SolanaWalletProvider>
+    </ConnectionProvider>
   );
 }
