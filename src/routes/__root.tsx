@@ -65,10 +65,14 @@ export const Route = createRootRoute({
 });
 
 function RootShell({ children }: { children: React.ReactNode }) {
+  // Inline script: read stored theme before React hydrates so we never flash
+  // the wrong palette. Default = dark.
+  const themeBoot = `(()=>{try{var t=localStorage.getItem('bagspulse-theme');var d=document.documentElement;if(t==='light'){d.classList.remove('dark');d.classList.add('light');d.style.colorScheme='light';}else{d.classList.add('dark');d.style.colorScheme='dark';}}catch(e){}})();`;
   return (
     <html lang="en" className="dark">
       <head>
         <HeadContent />
+        <script dangerouslySetInnerHTML={{ __html: themeBoot }} />
       </head>
       <body>
         {children}
