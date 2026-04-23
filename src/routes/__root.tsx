@@ -50,8 +50,12 @@ export const Route = createRootRoute({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       { name: "twitter:title", content: "BagsPulse — Social finance super-dashboard for Bags.fm" },
-      { name: "twitter:description", content: "BagsPulse: A social finance dashboard and protocol for the Bags ecosystem." },
+      { name: "twitter:description", content: "A social finance super-dashboard and protocol for tracking token performance and revenue." },
       // OG/twitter image — favicon and social preview generated from BagsPulse brand
+      { name: "description", content: "A social finance super-dashboard and protocol for tracking token performance and revenue." },
+      { property: "og:description", content: "A social finance super-dashboard and protocol for tracking token performance and revenue." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/26524943-4fb2-41bf-8742-250936722a38/id-preview-b84ec1e9--c9f9c88b-4631-4123-98ef-29383dc2c190.lovable.app-1776949556583.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/26524943-4fb2-41bf-8742-250936722a38/id-preview-b84ec1e9--c9f9c88b-4631-4123-98ef-29383dc2c190.lovable.app-1776949556583.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
