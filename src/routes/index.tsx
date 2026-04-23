@@ -64,7 +64,7 @@ function LandingPage() {
             <div className="space-y-7">
               <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/5 px-3 py-1 text-xs text-primary">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary pulse-ring" />
-                {live ? "Live Bags API connected" : "Ecosystem analytics live"}
+                {live ? "Live Bags API connected" : "Ecosystem analytics preview"}
               </div>
               <h1 className="text-4xl sm:text-5xl lg:text-6xl font-semibold leading-[1.05] tracking-tight">
                 The pulse of the entire <span className="text-gradient">Bags ecosystem</span>, in one dashboard.
@@ -99,7 +99,7 @@ function LandingPage() {
                     <div className="h-2 w-2 rounded-full bg-primary pulse-ring" />
                     <CardTitle className="text-base">Live leaderboard</CardTitle>
                   </div>
-                  <span className="text-xs text-muted-foreground font-mono">top 6</span>
+                  <span className="text-xs text-muted-foreground font-mono">{live ? "top 6" : "preview data"}</span>
                 </CardHeader>
                 <CardContent className="p-0">
                   <ul className="divide-y divide-border/50">
