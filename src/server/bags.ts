@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getSampleFeed, getSampleTokens } from "@/lib/sample-data";
 
 const BAGS_BASE = "https://public-api-v2.bags.fm/api/v1";
 
@@ -57,6 +58,24 @@ async function bagsFetch(path: string): Promise<unknown | null> {
     console.error(`[bags] ${path} failed`, err);
     return null;
   }
+}
+
+function fallbackTokens(): Token[] {
+  return getSampleTokens().map((token) => ({ ...token, description: "", website: null, twitter: null, status: null, dbcPoolKey: null, dammV2PoolKey: null }));
+}
+
+function fallbackFeed(): FeedEvent[] {
+  return getSampleFeed().map((event, index) => ({
+    id: event.id,
+    type: event.type,
+    token: event.token,
+    symbol: event.symbol,
+    mint: fallbackTokens()[index % fallbackTokens().length]?.mint ?? `sample-${index}`,
+    amountUsd: event.amountUsd,
+    actor: event.actor,
+    message: event.message,
+    at: event.at,
+  }));
 }
 
 function asRecord(value: unknown): Record<string, unknown> {
@@ -138,14 +157,21 @@ export const fetchTokens = createServerFn({ method: "GET" }).handler(
     const byMint = new Map(feed.map((item, i) => [normalizeToken(item, i).mint, normalizeToken(item, i)]));
     const tokens = pools.map((pool, i) => ({ ...normalizeToken(pool, i), ...(byMint.get(normalizeToken(pool, i).mint) ?? {}) }));
     const merged = tokens.length > 0 ? tokens : feed.map(normalizeToken);
-    return { tokens: merged.filter((t) => t.mint && !t.mint.startsWith("unknown")), live: true };
+    const normalized = merged.filter((t) => t.mint && !t.mint.startsWith("unknown") && (t.symbol !== "?" || t.name !== "?"));
+    if (normalized.length > 0) {
+      return { tokens: normalized, live: true };
+    }
+    return { tokens: fallbackTokens(), live: false };
   },
 );
 
 export const fetchFeed = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ events: FeedEvent[]; live: boolean }> => {
     const list = unwrapList(await bagsFetch("/token-launch/feed"));
-    return { events: list.map(normalizeFeedEvent), live: true };
+    if (list.length > 0) {
+      return { events: list.map(normalizeFeedEvent), live: true };
+    }
+    return { events: fallbackFeed(), live: false };
   },
 );
 
@@ -168,7 +194,10 @@ export const fetchTokenDetail = createServerFn({ method: "GET" })
     const pool = await bagsFetch(`/solana/bags/pools/token-mint?tokenMint=${encodeURIComponent(data.mint)}`).catch(() => null);
     const feed = unwrapList(await bagsFetch("/token-launch/feed").catch(() => null));
     const launch = feed.map(normalizeToken).find((t) => t.mint === data.mint);
-    if (!pool && !launch) return { token: null, live: true };
+    if (!pool && !launch) {
+      const fallback = fallbackTokens().find((t) => t.mint === data.mint) ?? null;
+      return { token: fallback, live: false };
+    }
     let token = { ...(pool ? normalizeToken(asRecord(pool).response ?? pool) : normalizeToken(launch)), ...(launch ?? {}) };
     const fees = await bagsFetch(`/token-launch/lifetime-fees?tokenMint=${encodeURIComponent(data.mint)}`).catch(() => null);
     const feeValue = asRecord(fees).response;
