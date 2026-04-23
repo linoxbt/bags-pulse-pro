@@ -12,7 +12,6 @@ import { Loader2, Wallet, CheckCircle2, AlertCircle, Coins } from "lucide-react"
 import { useEffect, useState } from "react";
 import { useWallet } from "@/hooks/useWallet";
 import { useSafeSignTransaction } from "@/hooks/useSafeSignTransaction";
-import { useWallets } from "@privy-io/react-auth/solana";
 import { ConnectWallet } from "./ConnectWallet";
 import {
   getClaimablePositions,
@@ -34,7 +33,6 @@ interface Props {
 export function ClaimFeesDialog({ open, onOpenChange }: Props) {
   const wallet = useWallet();
   const signer = useSafeSignTransaction();
-  const { wallets } = useWallets();
   const [positions, setPositions] = useState<ClaimablePosition[]>([]);
   const [live, setLive] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -82,14 +80,13 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
         return;
       }
 
-      const solanaWallet = wallets.find((w) => w.address === wallet.address) ?? wallets[0];
-      if (!signer?.signTransaction || !solanaWallet) {
+      if (!signer?.signTransaction) {
         toast.error("Wallet not ready to sign");
         setClaiming(false);
         return;
       }
 
-      // Decode the unsigned tx returned by Bags into raw bytes for Privy
+      // Decode the unsigned tx returned by Bags into raw bytes
       const buf = Uint8Array.from(atob(transaction), (c) => c.charCodeAt(0));
       // Validate it deserializes (versioned or legacy) — sanity check
       try {
@@ -100,11 +97,7 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
 
       const ep = await getHeliusEndpoints();
       const conn = new Connection(ep.rpc, "confirmed");
-      const { signedTransaction } = await signer.signTransaction({
-        transaction: buf,
-        wallet: solanaWallet,
-        chain: "solana:mainnet",
-      });
+      const { signedTransaction } = await signer.signTransaction({ transaction: buf });
       const sig = await conn.sendRawTransaction(signedTransaction, { skipPreflight: false });
       await conn.confirmTransaction(sig, "confirmed");
 
