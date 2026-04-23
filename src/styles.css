@@ -117,9 +117,76 @@
 }
 
 .dark {
-  /* same dark theme — app is dark by default */
+  /* same dark theme — app default */
   --background: oklch(0.16 0.02 240);
   --foreground: oklch(0.98 0.005 240);
+}
+
+.light {
+  /* Soft white theme — never pure #fff, use a warm off-white for comfort */
+  --background: oklch(0.985 0.004 95);
+  --foreground: oklch(0.20 0.025 240);
+
+  --surface: oklch(0.965 0.006 95);
+  --surface-elevated: oklch(0.98 0.005 95);
+
+  --card: oklch(0.985 0.004 95);
+  --card-foreground: oklch(0.22 0.025 240);
+
+  --popover: oklch(0.985 0.004 95);
+  --popover-foreground: oklch(0.22 0.025 240);
+
+  --primary: oklch(0.62 0.16 158);
+  --primary-foreground: oklch(0.985 0.004 95);
+  --primary-glow: oklch(0.72 0.17 158);
+
+  --secondary: oklch(0.94 0.008 95);
+  --secondary-foreground: oklch(0.22 0.025 240);
+
+  --muted: oklch(0.945 0.008 95);
+  --muted-foreground: oklch(0.45 0.02 240);
+
+  --accent: oklch(0.70 0.16 75);
+  --accent-foreground: oklch(0.20 0.02 240);
+
+  --success: oklch(0.62 0.17 158);
+  --success-foreground: oklch(0.985 0.004 95);
+
+  --warning: oklch(0.72 0.16 75);
+  --warning-foreground: oklch(0.20 0.02 240);
+
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.985 0.004 95);
+
+  --border: oklch(0.85 0.01 240 / 70%);
+  --input: oklch(0.85 0.01 240 / 70%);
+  --ring: oklch(0.62 0.16 158);
+
+  --gradient-hero: radial-gradient(
+      ellipse at top,
+      oklch(0.62 0.16 158 / 0.10),
+      transparent 60%
+    ),
+    linear-gradient(180deg, oklch(0.985 0.004 95), oklch(0.96 0.006 95));
+  --gradient-primary: linear-gradient(135deg, var(--primary), var(--primary-glow));
+  --gradient-card: linear-gradient(
+    180deg,
+    oklch(0.985 0.004 95 / 0.9),
+    oklch(0.96 0.006 95 / 0.7)
+  );
+  --shadow-glow: 0 0 60px -10px oklch(0.62 0.16 158 / 0.35);
+  --shadow-elevated: 0 20px 60px -20px oklch(0.20 0.025 240 / 0.18),
+    0 1px 0 0 oklch(1 0 0 / 0.6) inset;
+  --shadow-card: 0 8px 24px -8px oklch(0.20 0.025 240 / 0.15);
+
+  --sidebar: oklch(0.965 0.006 95);
+  --sidebar-foreground: oklch(0.22 0.025 240);
+  --sidebar-primary: oklch(0.62 0.16 158);
+  --sidebar-primary-foreground: oklch(0.985 0.004 95);
+  --sidebar-accent: oklch(0.945 0.008 95);
+  --sidebar-accent-foreground: oklch(0.22 0.025 240);
+  --sidebar-border: oklch(0.85 0.01 240 / 70%);
+  --sidebar-ring: oklch(0.62 0.16 158);
 }
 
 @layer base {
@@ -192,4 +259,18 @@
     to { transform: translateX(-50%); }
   }
   .animate-ticker { animation: ticker 40s linear infinite; }
+
+  /* Footer wave — animated SVG path stroke that drifts left forever */
+  @keyframes wave-shift {
+    from { transform: translate3d(0, 0, 0); }
+    to { transform: translate3d(-50%, 0, 0); }
+  }
+  .animate-wave-shift { animation: wave-shift 18s linear infinite; }
+
+  /* Soft glow drift used behind footer */
+  @keyframes glow-drift {
+    0%, 100% { transform: translate3d(-10%, 0, 0); opacity: 0.55; }
+    50% { transform: translate3d(10%, -8%, 0); opacity: 0.85; }
+  }
+  .animate-glow-drift { animation: glow-drift 12s ease-in-out infinite; }
 }
