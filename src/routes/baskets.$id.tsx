@@ -21,12 +21,15 @@ import { toast } from "sonner";
 import { formatUsd, shortAddress } from "@/lib/format";
 
 export const Route = createFileRoute("/baskets/$id")({
-  head: ({ loaderData }) => ({
-    meta: [
-      { title: `${(loaderData as { basket?: Basket | null })?.basket?.name ?? "Basket"} — BagsPulse` },
-      { name: "description", content: "Group portfolio basket on BagsPulse." },
-    ],
-  }),
+  head: ({ loaderData }) => {
+    const ld = loaderData as unknown as { basket?: Basket | null } | undefined;
+    return {
+      meta: [
+        { title: `${ld?.basket?.name ?? "Basket"} — BagsPulse` },
+        { name: "description", content: "Group portfolio basket on BagsPulse." },
+      ],
+    };
+  },
   loader: async ({ params }) => {
     const [detail, tokens] = await Promise.all([
       getBasket({ data: { id: params.id } }),
