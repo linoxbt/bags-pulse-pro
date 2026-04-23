@@ -38,9 +38,11 @@ function LeaderboardPage() {
           !lower ||
           t.symbol.toLowerCase().includes(lower) ||
           t.name.toLowerCase().includes(lower) ||
+          t.mint.toLowerCase().includes(lower) ||
           t.creator.toLowerCase().includes(lower),
       )
-      .sort((a, b) => (b[sortKey] as number) - (a[sortKey] as number));
+      .sort((a, b) => (b[sortKey] as number) - (a[sortKey] as number))
+      .slice(0, 50);
   }, [data.tokens, q, sortKey]);
 
   return (
@@ -49,7 +51,7 @@ function LeaderboardPage() {
         <header className="space-y-2">
           <h1 className="text-3xl font-semibold tracking-tight">Token leaderboard</h1>
           <p className="text-muted-foreground text-sm">
-            Every active Bags token, ranked. Switch tabs to re-sort by metric.
+            Top {filtered.length} live Bags tokens — market data via Bags + DexScreener. Search by symbol, name, mint or creator.
           </p>
         </header>
 
@@ -71,7 +73,7 @@ function LeaderboardPage() {
                 <Input
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
-                  placeholder="Search token, creator…"
+                  placeholder="Search by symbol, name, mint…"
                   className="pl-9 bg-background/40"
                 />
                 <Button type="submit" variant="outline">Search</Button>
