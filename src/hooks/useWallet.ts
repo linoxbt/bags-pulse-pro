@@ -1,30 +1,38 @@
-import { usePrivy } from "@privy-io/react-auth";
-import { useWallets } from "@privy-io/react-auth/solana";
+import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 
 export interface WalletState {
   ready: boolean;
   authenticated: boolean;
   configured: boolean;
   address: string | null;
-  login: (options?: Parameters<ReturnType<typeof usePrivy>["login"]>[0]) => void;
+  login: () => void;
   logout: () => Promise<void>;
 }
 
-// Safe wrapper. When Privy isn't configured (no VITE_PRIVY_APP_ID), the
-// PrivyProvider is skipped and the underlying hooks throw — we catch and
-// return a "not configured" state so pages can still render gracefully.
+// Safe wrapper around Solana wallet-adapter. When the providers haven't
+// mounted yet (SSR / first paint) the hooks throw — we return a "not
+// configured" state so pages render gracefully.
 export function useWallet(): WalletState {
   try {
-    const { ready, authenticated, login, logout } = usePrivy();
-    const { wallets } = useWallets();
-    const address = wallets[0]?.address ?? null;
+    const { publicKey, connected, connecting, disconnect, wallet } = useSolanaWallet();
+    const { setVisible } = useWalletModal();
+    const address = publicKey ? publicKey.toBase58() : null;
     return {
-      ready,
-      authenticated,
+      ready: !connecting,
+      authenticated: connected && !!address,
       configured: true,
       address,
-      login,
-      logout,
+      login: () => setVisible(true),
+      logout: async () => {
+        try {
+          await disconnect();
+        } catch {
+          /* ignore */
+        }
+        // hint TS that wallet is referenced
+        void wallet;
+      },
     };
   } catch {
     return {
@@ -34,9 +42,7 @@ export function useWallet(): WalletState {
       address: null,
       login: () => {
         if (typeof window !== "undefined") {
-          window.alert(
-            "Wallet sign-in needs a Privy App ID. Add PRIVY_APP_ID to your project secrets to enable it.",
-          );
+          window.location.reload();
         }
       },
       logout: async () => {},
