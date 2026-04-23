@@ -6,7 +6,7 @@ export interface WalletState {
   authenticated: boolean;
   configured: boolean;
   address: string | null;
-  login: () => void;
+  login: (options?: Parameters<ReturnType<typeof usePrivy>["login"]>[0]) => void;
   logout: () => Promise<void>;
 }
 
@@ -35,7 +35,7 @@ export function useWallet(): WalletState {
       login: () => {
         if (typeof window !== "undefined") {
           window.alert(
-            "Wallet sign-in needs a Privy App ID. Add VITE_PRIVY_APP_ID to your project environment to enable it.",
+            "Wallet sign-in needs a Privy App ID. Add PRIVY_APP_ID to your project secrets to enable it.",
           );
         }
       },

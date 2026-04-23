@@ -1,9 +1,11 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { BagsPulseLogo } from "@/components/BagsPulseLogo";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { Wallet } from "lucide-react";
+import { useEffect } from "react";
+import { useWallet } from "@/hooks/useWallet";
 
 export const Route = createFileRoute("/auth")({
   head: () => ({
@@ -16,6 +18,15 @@ export const Route = createFileRoute("/auth")({
 });
 
 function AuthPage() {
+  const wallet = useWallet();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (wallet.ready && wallet.authenticated && wallet.address) {
+      navigate({ to: "/dashboard" });
+    }
+  }, [wallet.ready, wallet.authenticated, wallet.address, navigate]);
+
   return (
     <PageShell>
       <div className="mx-auto max-w-md px-4 py-16">
@@ -34,15 +45,11 @@ function AuthPage() {
               </div>
               <ConnectWallet size="lg" full />
             </div>
-            <div className="rounded-md border border-border/40 bg-secondary/10 p-3 text-xs text-muted-foreground">
-              <p className="font-medium text-foreground mb-1">Wallet not opening?</p>
-              <p>
-                Privy needs your domain whitelisted. In the Privy dashboard → App
-                settings → Allowed origins, add{" "}
-                <code className="font-mono text-primary">*.lovable.app</code> and{" "}
-                <code className="font-mono text-primary">*.lovableproject.com</code>.
-              </p>
-            </div>
+            {wallet.ready && wallet.authenticated && wallet.address && (
+              <div className="rounded-md border border-border/40 bg-secondary/10 p-3 text-xs text-muted-foreground">
+                Signing you in and opening your dashboard…
+              </div>
+            )}
             <p className="text-center text-xs text-muted-foreground">
               By continuing you agree to BagsPulse{" "}
               <Link to="/" className="text-primary hover:underline">terms</Link>.

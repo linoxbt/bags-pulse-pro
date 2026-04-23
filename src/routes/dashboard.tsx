@@ -51,6 +51,8 @@ function DashboardPage() {
               <span>·</span>
               <span className="font-mono">{tokens.tokens.length} tokens</span>
               <span>·</span>
+              <span className="font-mono">{tokens.live ? "live data" : "preview data"}</span>
+              <span>·</span>
               <span className={cn("inline-flex items-center gap-1.5 font-mono", wsLive ? "text-success" : "text-muted-foreground")}>
                 <Radio className={cn("h-3 w-3", wsLive && "pulse-ring")} />
                 {wsLive ? `slot ${slot ?? "…"}` : "Helius offline"}
