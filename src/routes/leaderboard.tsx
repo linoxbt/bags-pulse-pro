@@ -38,9 +38,11 @@ function LeaderboardPage() {
           !lower ||
           t.symbol.toLowerCase().includes(lower) ||
           t.name.toLowerCase().includes(lower) ||
+          t.mint.toLowerCase().includes(lower) ||
           t.creator.toLowerCase().includes(lower),
       )
-      .sort((a, b) => (b[sortKey] as number) - (a[sortKey] as number));
+      .sort((a, b) => (b[sortKey] as number) - (a[sortKey] as number))
+      .slice(0, 50);
   }, [data.tokens, q, sortKey]);
 
   return (
