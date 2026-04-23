@@ -273,4 +273,27 @@
     50% { transform: translate3d(10%, -8%, 0); opacity: 0.85; }
   }
   .animate-glow-drift { animation: glow-drift 12s ease-in-out infinite; }
+
+  /* Ambient background — slow drifting orbs */
+  @keyframes orb-a {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(60px, 40px, 0) scale(1.08); }
+  }
+  @keyframes orb-b {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(-80px, 60px, 0) scale(1.12); }
+  }
+  @keyframes orb-c {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+    50% { transform: translate3d(40px, -50px, 0) scale(1.06); }
+  }
+  .animate-orb-a { animation: orb-a 22s ease-in-out infinite; }
+  .animate-orb-b { animation: orb-b 26s ease-in-out infinite; }
+  .animate-orb-c { animation: orb-c 30s ease-in-out infinite; }
+
+  @keyframes grid-drift {
+    0% { background-position: 0 0; }
+    100% { background-position: 48px 48px; }
+  }
+  .animate-grid-drift { animation: grid-drift 22s linear infinite; }
 }

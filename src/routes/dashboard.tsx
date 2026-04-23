@@ -180,6 +180,17 @@ function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+
+        <Card className="bg-gradient-to-br from-primary/10 via-card/60 to-card/60 border-primary/30">
+          <CardContent className="p-6 flex flex-col md:flex-row items-start md:items-center gap-4 justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-widest text-primary font-mono">PulseRouter</p>
+              <h3 className="text-lg font-semibold mt-1">Earn protocol fees on every Bags launch routed through your app</h3>
+              <p className="text-sm text-muted-foreground mt-1">Treasury · 6CxhRUpZ…BaEzhd · 5% protocol cut · 80/15/5 default split</p>
+            </div>
+            <Link to="/router" className="text-sm font-medium text-primary hover:underline shrink-0">Open marketplace →</Link>
+          </CardContent>
+        </Card>
       </div>
     </PageShell>
   );

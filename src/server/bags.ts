@@ -199,14 +199,86 @@ function feedEventFromToken(token: Token, raw: Record<string, unknown>, i: numbe
   };
 }
 
+// Pull recent on-chain txs from Helius (parsed) so the feed shows buys, sells,
+// fees and milestones — not only launch / graduation events from Bags.
+type ParsedTx = {
+  signature: string;
+  timestamp: number;
+  description?: string;
+  feePayer?: string;
+  tokenTransfers?: Array<{ fromUserAccount?: string; toUserAccount?: string; mint: string; tokenAmount: number }>;
+  nativeTransfers?: Array<{ fromUserAccount?: string; toUserAccount?: string; amount: number }>;
+};
+function shortAddr(a?: string) {
+  if (!a) return "anon";
+  return `${a.slice(0, 4)}…${a.slice(-4)}`;
+}
+async function fetchHeliusTxs(mint: string, limit = 4): Promise<ParsedTx[]> {
+  const key = process.env.HELIUS_API_KEY?.trim();
+  if (!key) return [];
+  try {
+    const url = `https://api.helius.xyz/v0/addresses/${mint}/transactions?api-key=${key}&limit=${limit}`;
+    const res = await fetch(url, { headers: { accept: "application/json" } });
+    if (!res.ok) return [];
+    const arr = (await res.json()) as ParsedTx[];
+    return Array.isArray(arr) ? arr : [];
+  } catch {
+    return [];
+  }
+}
+function txToEvent(tx: ParsedTx, token: Token): FeedEvent {
+  const transfers = tx.tokenTransfers ?? [];
+  const inflow = transfers.filter((t) => t.mint === token.mint && t.toUserAccount).reduce((s, t) => s + (t.tokenAmount ?? 0), 0);
+  const outflow = transfers.filter((t) => t.mint === token.mint && t.fromUserAccount).reduce((s, t) => s + (t.tokenAmount ?? 0), 0);
+  const sol = (tx.nativeTransfers ?? []).reduce((s, n) => s + Math.abs(n.amount ?? 0), 0) / 1_000_000_000;
+  const looksFee = (tx.description ?? "").toLowerCase().includes("claim") || (tx.description ?? "").toLowerCase().includes("fee");
+  let type: FeedEvent["type"] = "milestone";
+  let message = tx.description || `${token.symbol} on-chain activity`;
+  if (looksFee) {
+    type = "fee";
+    message = `${token.symbol}: creator fee claim`;
+  } else if (inflow > outflow && inflow > 0) {
+    type = "buy";
+    message = `${token.symbol} buy: ${inflow.toFixed(2)} tokens`;
+  } else if (outflow > inflow && outflow > 0) {
+    type = "sell";
+    message = `${token.symbol} sell: ${outflow.toFixed(2)} tokens`;
+  }
+  return {
+    id: tx.signature,
+    type,
+    token: token.name,
+    symbol: token.symbol,
+    mint: token.mint,
+    amountUsd: sol * (token.price > 0 ? 200 : 200),
+    actor: shortAddr(tx.feePayer),
+    message,
+    at: new Date((tx.timestamp ?? Date.now() / 1000) * 1000).toISOString(),
+  };
+}
+
 export const fetchFeed = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ events: FeedEvent[]; live: boolean }> => {
     const raw = unwrapList(await bagsFetch("/token-launch/feed"));
     if (raw.length === 0) return { events: [], live: false };
     const tokens = raw.map((r, i) => normalizeBagsToken(r, i));
     const dexMap = await dexFetchBatch(tokens.map((t) => t.mint));
-    const events = tokens.map((t, i) => feedEventFromToken(enrichWithDex(t, dexMap.get(t.mint)), asRecord(raw[i]), i));
-    return { events, live: true };
+    const enriched = tokens.map((t) => enrichWithDex(t, dexMap.get(t.mint)));
+    // Launch / graduation events from the Bags feed
+    const launchEvents = enriched.map((t, i) => feedEventFromToken(t, asRecord(raw[i]), i));
+    // On-chain events from Helius for the top mints (cap to control latency)
+    const topMints = enriched.slice(0, 6);
+    const onchainBatches = await Promise.all(
+      topMints.map(async (t) => {
+        const txs = await fetchHeliusTxs(t.mint, 4);
+        return txs.map((tx) => txToEvent(tx, t));
+      }),
+    );
+    const onchainEvents = onchainBatches.flat();
+    const all = [...launchEvents, ...onchainEvents].sort(
+      (a, b) => new Date(b.at).getTime() - new Date(a.at).getTime(),
+    );
+    return { events: all.slice(0, 80), live: true };
   },
 );
 

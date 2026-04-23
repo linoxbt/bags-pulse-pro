@@ -16,9 +16,11 @@ import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DashboardRouteImport } from './routes/dashboard'
+import { Route as BasketsRouteImport } from './routes/baskets'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as TokenMintRouteImport } from './routes/token.$mint'
+import { Route as BasketsIdRouteImport } from './routes/baskets.$id'
 import { Route as ApiMcpRouteImport } from './routes/api.mcp'
 import { Route as ApiLicensesConfirmRouteImport } from './routes/api.licenses.confirm'
 import { Route as ApiActionsSubscribeRouteImport } from './routes/api.actions.subscribe'
@@ -59,6 +61,11 @@ const DashboardRoute = DashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BasketsRoute = BasketsRouteImport.update({
+  id: '/baskets',
+  path: '/baskets',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
   path: '/auth',
@@ -73,6 +80,11 @@ const TokenMintRoute = TokenMintRouteImport.update({
   id: '/token/$mint',
   path: '/token/$mint',
   getParentRoute: () => rootRouteImport,
+} as any)
+const BasketsIdRoute = BasketsIdRouteImport.update({
+  id: '/$id',
+  path: '/$id',
+  getParentRoute: () => BasketsRoute,
 } as any)
 const ApiMcpRoute = ApiMcpRouteImport.update({
   id: '/api/mcp',
@@ -98,6 +110,7 @@ const ApiPublicAgentRunRoute = ApiPublicAgentRunRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/baskets': typeof BasketsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
@@ -106,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
@@ -114,6 +128,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/baskets': typeof BasketsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
@@ -122,6 +137,7 @@ export interface FileRoutesByTo {
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
@@ -131,6 +147,7 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/baskets': typeof BasketsRouteWithChildren
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
@@ -139,6 +156,7 @@ export interface FileRoutesById {
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
   '/api/mcp': typeof ApiMcpRoute
+  '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
@@ -149,6 +167,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/baskets'
     | '/dashboard'
     | '/docs'
     | '/feed'
@@ -157,6 +176,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/router'
     | '/api/mcp'
+    | '/baskets/$id'
     | '/token/$mint'
     | '/api/actions/subscribe'
     | '/api/licenses/confirm'
@@ -165,6 +185,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/baskets'
     | '/dashboard'
     | '/docs'
     | '/feed'
@@ -173,6 +194,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/router'
     | '/api/mcp'
+    | '/baskets/$id'
     | '/token/$mint'
     | '/api/actions/subscribe'
     | '/api/licenses/confirm'
@@ -181,6 +203,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/auth'
+    | '/baskets'
     | '/dashboard'
     | '/docs'
     | '/feed'
@@ -189,6 +212,7 @@ export interface FileRouteTypes {
     | '/pricing'
     | '/router'
     | '/api/mcp'
+    | '/baskets/$id'
     | '/token/$mint'
     | '/api/actions/subscribe'
     | '/api/licenses/confirm'
@@ -198,6 +222,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AuthRoute: typeof AuthRoute
+  BasketsRoute: typeof BasketsRouteWithChildren
   DashboardRoute: typeof DashboardRoute
   DocsRoute: typeof DocsRoute
   FeedRoute: typeof FeedRoute
@@ -263,6 +288,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DashboardRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/baskets': {
+      id: '/baskets'
+      path: '/baskets'
+      fullPath: '/baskets'
+      preLoaderRoute: typeof BasketsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/auth': {
       id: '/auth'
       path: '/auth'
@@ -283,6 +315,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/token/$mint'
       preLoaderRoute: typeof TokenMintRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/baskets/$id': {
+      id: '/baskets/$id'
+      path: '/$id'
+      fullPath: '/baskets/$id'
+      preLoaderRoute: typeof BasketsIdRouteImport
+      parentRoute: typeof BasketsRoute
     }
     '/api/mcp': {
       id: '/api/mcp'
@@ -315,9 +354,21 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface BasketsRouteChildren {
+  BasketsIdRoute: typeof BasketsIdRoute
+}
+
+const BasketsRouteChildren: BasketsRouteChildren = {
+  BasketsIdRoute: BasketsIdRoute,
+}
+
+const BasketsRouteWithChildren =
+  BasketsRoute._addFileChildren(BasketsRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AuthRoute: AuthRoute,
+  BasketsRoute: BasketsRouteWithChildren,
   DashboardRoute: DashboardRoute,
   DocsRoute: DocsRoute,
   FeedRoute: FeedRoute,
