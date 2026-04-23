@@ -19,13 +19,14 @@ interface ConnectWalletProps {
 
 export function ConnectWallet({ size = "sm", full = false }: ConnectWalletProps) {
   const wallet = useWallet();
+  const handleLogin = () => wallet.login({ loginMethods: ["wallet"] });
 
   if (!wallet.configured) {
     return (
       <Button
         size={size}
         variant="outline"
-        onClick={wallet.login}
+        onClick={handleLogin}
         className={full ? "w-full" : undefined}
       >
         <Wallet className="h-4 w-4" /> Connect wallet
@@ -45,7 +46,7 @@ export function ConnectWallet({ size = "sm", full = false }: ConnectWalletProps)
     return (
       <Button
         size={size}
-        onClick={wallet.login}
+        onClick={handleLogin}
         className={`bg-gradient-to-r from-primary to-primary-glow text-primary-foreground hover:opacity-90 ${full ? "w-full" : ""}`}
       >
         <Wallet className="h-4 w-4" /> Connect wallet
