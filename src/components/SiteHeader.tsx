@@ -1,6 +1,7 @@
 import { Link, useLocation } from "@tanstack/react-router";
 import { BagsPulseLogo } from "./BagsPulseLogo";
 import { Button } from "./ui/button";
+import { ThemeToggle } from "./ThemeToggle";
 import { cn } from "@/lib/utils";
 import { Menu } from "lucide-react";
 import { useState } from "react";
@@ -43,6 +44,7 @@ export function SiteHeader() {
           })}
         </nav>
         <div className="flex items-center gap-2">
+          <ThemeToggle />
           <Button asChild size="sm" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground">
             <Link to="/auth">Sign in</Link>
           </Button>

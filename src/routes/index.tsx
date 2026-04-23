@@ -35,6 +35,10 @@ export const Route = createFileRoute("/")({
         content:
           "Live leaderboards, fee marketplaces, group portfolios. Built for the Bags ecosystem.",
       },
+      { property: "og:image", content: "/og-image.jpg" },
+      { property: "og:image:width", content: "1216" },
+      { property: "og:image:height", content: "640" },
+      { name: "twitter:image", content: "/og-image.jpg" },
     ],
   }),
   component: LandingPage,

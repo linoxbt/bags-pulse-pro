@@ -44,9 +44,13 @@ export function shortAddress(addr: string) {
   return `${addr.slice(0, 4)}…${addr.slice(-4)}`;
 }
 
-export function timeAgo(d: Date | string | number) {
+export function timeAgo(d: Date | string | number, nowMs?: number) {
   const date = new Date(d);
-  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  // `nowMs` lets callers freeze the reference time (used to skip SSR/CSR drift
+  // by deferring rendering until after mount). When omitted we fall back to a
+  // bucketed Date.now() to minimize hydration mismatches.
+  const reference = nowMs ?? Date.now();
+  const seconds = Math.floor((reference - date.getTime()) / 1000);
   const intervals: [number, string][] = [
     [60, "s"],
     [60, "m"],

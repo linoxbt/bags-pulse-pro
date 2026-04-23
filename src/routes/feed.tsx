@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeed, type FeedEvent } from "@/server/bags";
-import { formatNumber, timeAgo } from "@/lib/format";
+import { formatNumber } from "@/lib/format";
+import { RelativeTime } from "@/components/RelativeTime";
 import { ArrowDownRight, ArrowUpRight, GraduationCap, Megaphone, Rocket, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
@@ -84,7 +85,7 @@ function FeedPage() {
                         <span className="font-semibold">${e.symbol}</span> · {e.message}
                       </p>
                       <p className="text-xs text-muted-foreground font-mono mt-0.5">
-                        {e.actor} · {timeAgo(e.at)}
+                        {e.actor} · <RelativeTime date={e.at} />
                       </p>
                     </div>
                     <span className="text-sm font-mono text-muted-foreground shrink-0">

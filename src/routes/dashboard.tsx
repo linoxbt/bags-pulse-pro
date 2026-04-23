@@ -2,7 +2,8 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchTokens, fetchFeed } from "@/server/bags";
-import { formatNumber, formatPct, formatUsd, timeAgo } from "@/lib/format";
+import { formatNumber, formatPct, formatUsd } from "@/lib/format";
+import { RelativeTime } from "@/components/RelativeTime";
 import { cn } from "@/lib/utils";
 import type { FeedEvent, Token } from "@/server/bags";
 import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
@@ -242,7 +243,7 @@ function FeedRow({ e }: { e: FeedEvent }) {
       <div className="flex-1 min-w-0">
         <p className="text-sm">{e.message}</p>
         <p className="text-xs text-muted-foreground font-mono">
-          {e.actor} · {timeAgo(e.at)}
+          {e.actor} · <RelativeTime date={e.at} />
         </p>
       </div>
       <span className="text-xs font-mono text-muted-foreground">${formatNumber(e.amountUsd)}</span>
