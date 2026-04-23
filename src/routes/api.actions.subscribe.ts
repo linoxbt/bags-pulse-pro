@@ -21,15 +21,14 @@ const CORS = {
 
 const STRATEGIES: Record<string, { title: string; description: string; priceSol: number }> = {
   "alpha-pulse": {
-    title: "Alpha Pulse — Premium AI Signals",
-    description:
-      "Live AI-curated entries on Bags-launched tokens, refreshed every 5 minutes. Includes creator-health filtering and graduation alerts.",
-    priceSol: 0.05,
+    title: "Alpha Pulse — Pro AI Signals",
+    description: "Live AI-curated entries on Bags-launched tokens, refreshed every 5 minutes.",
+    priceSol: 0.2,
   },
   "group-basket-ai": {
-    title: "Group Basket AI Manager",
+    title: "Elite — Group Basket AI Manager",
     description: "Subscribe an existing group basket to autonomous AI rebalances.",
-    priceSol: 0.1,
+    priceSol: 0.5,
   },
 };
 
@@ -39,9 +38,8 @@ function getStrategy(url: URL) {
 }
 
 function getTreasury(): string {
-  // Configurable via secret; falls back to a well-known burn-friendly placeholder
-  // so the Blink renders in dev. Set BAGSPULSE_TREASURY_WALLET to your real wallet.
-  return process.env.BAGSPULSE_TREASURY_WALLET ?? "11111111111111111111111111111111";
+  // BagsPulse treasury wallet (override with BAGSPULSE_TREASURY_WALLET secret).
+  return process.env.BAGSPULSE_TREASURY_WALLET ?? "6CxhRUpZ9av3X28QxvppYycEm8SjTS5Wf5UgxBaEzhd";
 }
 
 export const Route = createFileRoute("/api/actions/subscribe")({
