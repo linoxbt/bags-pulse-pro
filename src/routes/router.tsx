@@ -98,20 +98,24 @@ function RouterPage() {
               of every token launched through you.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-glow">
-                    Register your app
-                  </Button>
-                </DialogTrigger>
-                <RegisterPartnerDialog
-                  walletAddress={wallet.address}
-                  onSuccess={() => {
-                    setRegisterOpen(false);
-                    loadPartners();
-                  }}
-                />
-              </Dialog>
+              {wallet.authenticated ? (
+                <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="lg" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-glow">
+                      Register your app
+                    </Button>
+                  </DialogTrigger>
+                  <RegisterPartnerDialog
+                    walletAddress={wallet.address}
+                    onSuccess={() => {
+                      setRegisterOpen(false);
+                      loadPartners();
+                    }}
+                  />
+                </Dialog>
+              ) : (
+                <ConnectWallet size="lg" />
+              )}
               <Button onClick={() => setClaimOpen(true)} size="lg" variant="outline">
                 <Coins className="h-4 w-4" /> Claim my fees
               </Button>
