@@ -108,9 +108,9 @@ function BasketsPage() {
 
         {!authed && (
           <Card className="bg-card/60 border-dashed">
-            <CardContent className="p-6 text-sm text-muted-foreground">
-              Sign in to create and manage your own baskets.{" "}
-              <Link to="/auth" className="text-primary hover:underline">Open auth →</Link>
+            <CardContent className="p-6 text-sm text-muted-foreground flex flex-wrap items-center justify-between gap-3">
+              <span>Connect your wallet to create and manage your own baskets.</span>
+              <ConnectWallet size="sm" />
             </CardContent>
           </Card>
         )}
