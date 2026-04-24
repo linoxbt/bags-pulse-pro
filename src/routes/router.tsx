@@ -323,15 +323,22 @@ function RegisterPartnerDialog({
           <div className="space-y-1.5">
             <Label>App ID</Label>
             <Input required placeholder="my-launchpad" value={appId} onChange={(e) => setAppId(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Unique slug. BagsPulse uses it to look up your fee_wallet + BPS at every swap routed through your app.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label>App name</Label>
             <Input required placeholder="My Launchpad" value={appName} onChange={(e) => setAppName(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Public display name shown in the partner marketplace.
+            </p>
           </div>
         </div>
         <div className="space-y-1.5">
           <Label>Fee wallet (Solana)</Label>
           <Input required placeholder="GxYz…" value={feeWallet} onChange={(e) => setFeeWallet(e.target.value)} className="font-mono text-sm" />
+          <p className="text-[11px] text-muted-foreground">Where your share of every routed fee will be deposited.</p>
         </div>
         <div className="space-y-1.5">
           <Label>Your fee share — {(bps / 100).toFixed(1)}%</Label>
