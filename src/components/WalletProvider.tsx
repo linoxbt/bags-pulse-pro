@@ -58,16 +58,13 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const wallets = useMemo(
-    () => [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()],
-    [],
+    () => (mounted ? [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()] : []),
+    [mounted],
   );
-
-  // SSR-safe: render children plainly until client mount, then mount the providers.
-  if (!mounted) return <>{children}</>;
 
   return (
     <ConnectionProvider endpoint={rpc}>
-      <SolanaWalletProvider wallets={wallets} autoConnect>
+      <SolanaWalletProvider wallets={wallets} autoConnect={mounted}>
         <WalletModalProvider>
           <SupabaseSessionBridge />
           {children}
