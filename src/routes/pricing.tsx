@@ -1,11 +1,21 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { PageShell } from "@/components/PageShell";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Check } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { PRICING_TIERS, SOL_USD_FALLBACK, SUPPORTED_CURRENCIES, priceInCurrency, type PaymentCurrency } from "@/lib/constants";
+import {
+  PRICING_TIERS,
+  SOL_USD_FALLBACK,
+  SUPPORTED_CURRENCIES,
+  priceInCurrency,
+  type PaymentCurrency,
+  type PricingTier,
+} from "@/lib/constants";
 import { useEffect, useState } from "react";
+import { useWallet } from "@/hooks/useWallet";
+import { ConnectWallet } from "@/components/ConnectWallet";
+import { SubscribeDialog } from "@/components/SubscribeDialog";
 
 export const Route = createFileRoute("/pricing")({
   head: () => ({
@@ -20,6 +30,8 @@ export const Route = createFileRoute("/pricing")({
 function PricingPage() {
   const [currency, setCurrency] = useState<PaymentCurrency>("SOL");
   const [solUsd, setSolUsd] = useState(SOL_USD_FALLBACK);
+  const [subTier, setSubTier] = useState<PricingTier | null>(null);
+  const wallet = useWallet();
 
   useEffect(() => {
     fetch("https://api.dexscreener.com/tokens/v1/solana/So11111111111111111111111111111111111111112")
@@ -57,15 +69,19 @@ function PricingPage() {
               </button>
             ))}
           </div>
+          <p className="text-xs text-muted-foreground font-mono pt-1">
+            Live SOL/USD oracle: ${solUsd.toFixed(2)}
+          </p>
         </header>
         <div className="grid md:grid-cols-3 gap-5">
           {PRICING_TIERS.map((t) => {
-            const amount = priceInCurrency(t.priceSol, currency, solUsd);
-            const display = t.priceSol === 0
-              ? "Free"
-              : currency === "SOL"
-                ? `${amount} SOL`
-                : `${amount} ${currency}`;
+            const amount = priceInCurrency(t.priceUsd, currency, solUsd);
+            const display =
+              t.priceUsd === 0
+                ? "Free"
+                : currency === "SOL"
+                  ? `${amount} SOL`
+                  : `$${amount}`;
             return (
               <Card
                 key={t.id}
@@ -84,7 +100,7 @@ function PricingPage() {
                     <p className="text-sm font-semibold">{t.name}</p>
                     <p className="mt-3 text-4xl font-semibold tracking-tight font-mono">
                       {display}
-                      {t.priceSol > 0 && (
+                      {t.priceUsd > 0 && (
                         <span className="text-sm text-muted-foreground font-normal font-sans">/mo</span>
                       )}
                     </p>
@@ -98,20 +114,26 @@ function PricingPage() {
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    asChild
-                    className={cn(
-                      "w-full",
-                      t.highlight
-                        ? "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground"
-                        : "",
-                    )}
-                    variant={t.highlight ? "default" : "outline"}
-                  >
-                    <Link to={t.priceSol === 0 ? "/dashboard" : "/auth"}>
-                      {t.priceSol === 0 ? "Start free" : `Upgrade to ${t.name}`}
-                    </Link>
-                  </Button>
+                  {t.priceUsd === 0 ? (
+                    <Button asChild className="w-full" variant="outline">
+                      <a href="/dashboard">Start free</a>
+                    </Button>
+                  ) : !wallet.authenticated ? (
+                    <ConnectWallet size="default" full />
+                  ) : (
+                    <Button
+                      onClick={() => setSubTier(t)}
+                      className={cn(
+                        "w-full",
+                        t.highlight
+                          ? "bg-gradient-to-r from-primary to-primary-glow text-primary-foreground"
+                          : "",
+                      )}
+                      variant={t.highlight ? "default" : "outline"}
+                    >
+                      Upgrade to {t.name}
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -121,6 +143,13 @@ function PricingPage() {
           Treasury: 6CxhRUpZ9av3X28QxvppYycEm8SjTS5Wf5UgxBaEzhd · Fee split via PulseRouter
         </p>
       </section>
+      <SubscribeDialog
+        open={!!subTier}
+        onOpenChange={(o) => !o && setSubTier(null)}
+        tier={subTier}
+        currency={currency}
+        solUsd={solUsd}
+      />
     </PageShell>
   );
 }

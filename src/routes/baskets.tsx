@@ -39,17 +39,31 @@ function BasketsPage() {
   const { baskets: publicBaskets } = Route.useLoaderData() as { baskets: Basket[] };
   const wallet = useWallet();
   const [mine, setMine] = useState<Basket[]>([]);
-  const [authed, setAuthed] = useState(false);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Wallet connected => SupabaseSessionBridge has created (or will create)
+  // an anonymous session. Poll briefly until the session lands, then load.
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const has = !!data.user;
-      setAuthed(has);
-      if (has) loadMine();
-    });
-  }, []);
+    if (!wallet.authenticated) {
+      setMine([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      for (let i = 0; i < 20; i++) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) break;
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      if (!cancelled) loadMine();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [wallet.authenticated]);
+
+  const authed = wallet.authenticated;
 
   async function loadMine() {
     setLoading(true);
@@ -94,9 +108,9 @@ function BasketsPage() {
 
         {!authed && (
           <Card className="bg-card/60 border-dashed">
-            <CardContent className="p-6 text-sm text-muted-foreground">
-              Sign in to create and manage your own baskets.{" "}
-              <Link to="/auth" className="text-primary hover:underline">Open auth →</Link>
+            <CardContent className="p-6 text-sm text-muted-foreground flex flex-wrap items-center justify-between gap-3">
+              <span>Connect your wallet to create and manage your own baskets.</span>
+              <ConnectWallet size="sm" />
             </CardContent>
           </Card>
         )}

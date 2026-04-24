@@ -98,20 +98,24 @@ function RouterPage() {
               of every token launched through you.
             </p>
             <div className="flex flex-wrap gap-3 pt-2">
-              <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
-                <DialogTrigger asChild>
-                  <Button size="lg" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-glow">
-                    Register your app
-                  </Button>
-                </DialogTrigger>
-                <RegisterPartnerDialog
-                  walletAddress={wallet.address}
-                  onSuccess={() => {
-                    setRegisterOpen(false);
-                    loadPartners();
-                  }}
-                />
-              </Dialog>
+              {wallet.authenticated ? (
+                <Dialog open={registerOpen} onOpenChange={setRegisterOpen}>
+                  <DialogTrigger asChild>
+                    <Button size="lg" className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-glow">
+                      Register your app
+                    </Button>
+                  </DialogTrigger>
+                  <RegisterPartnerDialog
+                    walletAddress={wallet.address}
+                    onSuccess={() => {
+                      setRegisterOpen(false);
+                      loadPartners();
+                    }}
+                  />
+                </Dialog>
+              ) : (
+                <ConnectWallet size="lg" />
+              )}
               <Button onClick={() => setClaimOpen(true)} size="lg" variant="outline">
                 <Coins className="h-4 w-4" /> Claim my fees
               </Button>
@@ -134,9 +138,21 @@ function RouterPage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
         <h2 className="text-2xl font-semibold tracking-tight mb-8">How it works</h2>
         <div className="grid md:grid-cols-3 gap-5">
-          <Step n={1} title="Register your app" body="One-time on-chain partner config (PDA). 0.1 SOL registration. Choose your fee wallet and BPS share." />
-          <Step n={2} title="Wrap the Bags SDK" body="npm install @pulserouter/sdk. Call router.launchToken() instead of sdk.tokenLaunch directly." />
-          <Step n={3} title="Earn forever" body="Every token launched through you routes a permanent on-chain share of fees to your wallet. Claim anytime." />
+          <Step
+            n={1}
+            title="Pick a unique app_id"
+            body="Choose a slug like 'my-launchpad'. BagsPulse uses it to look up your fee_wallet and BPS share whenever a token launches through PulseRouter."
+          />
+          <Step
+            n={2}
+            title="Wrap the Bags SDK"
+            body="Install @bagsfm/bags-sdk and call createBagsFeeShareConfig with the BagsPulse helper — it auto-injects your wallet plus the 5% protocol cut into the on-chain config."
+          />
+          <Step
+            n={3}
+            title="Earn forever"
+            body="Every token launched through your app_id routes a permanent on-chain share of fees to your wallet. Claim anytime from this page."
+          />
         </div>
       </section>
 
@@ -307,15 +323,22 @@ function RegisterPartnerDialog({
           <div className="space-y-1.5">
             <Label>App ID</Label>
             <Input required placeholder="my-launchpad" value={appId} onChange={(e) => setAppId(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Unique slug. BagsPulse uses it to look up your fee_wallet + BPS at every swap routed through your app.
+            </p>
           </div>
           <div className="space-y-1.5">
             <Label>App name</Label>
             <Input required placeholder="My Launchpad" value={appName} onChange={(e) => setAppName(e.target.value)} />
+            <p className="text-[11px] text-muted-foreground leading-snug">
+              Public display name shown in the partner marketplace.
+            </p>
           </div>
         </div>
         <div className="space-y-1.5">
           <Label>Fee wallet (Solana)</Label>
           <Input required placeholder="GxYz…" value={feeWallet} onChange={(e) => setFeeWallet(e.target.value)} className="font-mono text-sm" />
+          <p className="text-[11px] text-muted-foreground">Where your share of every routed fee will be deposited.</p>
         </div>
         <div className="space-y-1.5">
           <Label>Your fee share — {(bps / 100).toFixed(1)}%</Label>

@@ -19,61 +19,65 @@ function DocsPage() {
         <header className="space-y-3">
           <p className="text-sm text-primary font-semibold uppercase tracking-widest">Developer docs</p>
           <h1 className="text-3xl font-semibold tracking-tight">
-            Build with PulseRouter SDK
+            Build with PulseRouter
           </h1>
           <p className="text-muted-foreground">
-            Earn protocol fees on every token your app helps launch. Wrap the
-            official <code className="px-1 font-mono bg-secondary rounded">@bagsfm/bags-sdk</code> with our drop-in router.
+            PulseRouter is BagsPulse's fee-routing layer on top of the official
+            <code className="px-1 mx-1 font-mono bg-secondary rounded">@bagsfm/bags-sdk</code>.
+            There is no separate npm package — you install the Bags SDK and use the
+            BagsPulse partner registry to look up your fee_wallet at swap-time.
           </p>
         </header>
 
-        <Section title="1. Install">
-          <Code>{`npm install @pulserouter/sdk @bagsfm/bags-sdk @solana/web3.js`}</Code>
+        <Section title="1. Install the real packages">
+          <Code>{`npm install @bagsfm/bags-sdk @solana/web3.js`}</Code>
+          <p className="text-xs text-muted-foreground">
+            Note: <code className="font-mono">@pulserouter/sdk</code> does not exist on npm —
+            PulseRouter is a hosted protocol, not a client SDK.
+          </p>
         </Section>
 
         <Section title="2. Register your app">
           <p className="text-sm text-muted-foreground">
-            One-time on-chain registration creates a partner config PDA scoped
-            to your app wallet. 0.1 SOL fee.
+            Pick a unique <code className="px-1 font-mono bg-secondary rounded">app_id</code> slug
+            and your <code className="px-1 font-mono bg-secondary rounded">fee_wallet</code> on the
+            <Link to="/router" className="text-primary hover:underline mx-1">PulseRouter page</Link>.
+            BagsPulse stores this mapping and uses it to inject your wallet into every
+            <code className="px-1 mx-1 font-mono bg-secondary rounded">createBagsFeeShareConfig</code>
+            call routed through your app.
           </p>
-          <Code>{`import { PulseRouter } from "@pulserouter/sdk";
-
-await PulseRouter.registerPartner({
-  appId: "your-app-id",
-  feeWallet: yourAppWallet,
-  bps: 1500,            // your share per launch (15%)
-});`}</Code>
         </Section>
 
-        <Section title="3. Launch tokens through the router">
-          <Code>{`import { PulseRouter } from "@pulserouter/sdk";
+        <Section title="3. Launch tokens with the Bags SDK + your app_id">
+          <Code>{`import { BagsSDK } from "@bagsfm/bags-sdk";
 import { Connection } from "@solana/web3.js";
 
-const connection = new Connection(process.env.HELIUS_RPC_URL!);
-const router = new PulseRouter({
+const sdk = new BagsSDK({
   apiKey: process.env.BAGS_API_KEY!,
-  appId: "your-app-id",
-  connection,
+  connection: new Connection(process.env.HELIUS_RPC_URL!),
 });
 
-// Auto-inserts fee splits:
-//   creator   8000 BPS (80%)
-//   your app  1500 BPS (15%)
-//   protocol   500 BPS  (5%)
-const result = await router.launchToken({
-  name: "My Token",
-  symbol: "MTK",
-  creatorWallet: creatorPubkey,
-  creatorBps: 8000,
-  appBps: 1500,
+// Resolve your registered split from BagsPulse
+const partner = await fetch(
+  "https://bagspulse.lovable.app/api/public/agent/run?app_id=your-app-id"
+).then((r) => r.json());
+
+// Build a fee share config with creator + your app + protocol
+const feeConfig = await sdk.config.createBagsFeeShareConfig({
+  payer: payerPubkey,
+  users: [
+    { wallet: creatorPubkey,           bps: 8000 }, // 80% creator
+    { wallet: partner.fee_wallet,      bps: 1500 }, // 15% your app
+    { wallet: partner.treasury_wallet, bps: 500  }, //  5% protocol
+  ],
 });`}</Code>
         </Section>
 
         <Section title="4. Claim accumulated fees">
-          <Code>{`const positions = await router.getAllClaimablePositions(yourAppWallet);
-const txs = await router.getClaimTransactions(positions);
-// sign + send
-`}</Code>
+          <p className="text-sm text-muted-foreground">
+            Use the in-app <Link to="/router" className="text-primary hover:underline">Claim my fees</Link> dialog
+            on the PulseRouter page — it builds and signs the on-chain claim transaction with your connected wallet.
+          </p>
         </Section>
 
         <Section title="Resources">
