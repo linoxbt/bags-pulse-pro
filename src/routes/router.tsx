@@ -134,9 +134,21 @@ function RouterPage() {
       <section className="mx-auto max-w-7xl px-4 sm:px-6 py-12">
         <h2 className="text-2xl font-semibold tracking-tight mb-8">How it works</h2>
         <div className="grid md:grid-cols-3 gap-5">
-          <Step n={1} title="Register your app" body="One-time on-chain partner config (PDA). 0.1 SOL registration. Choose your fee wallet and BPS share." />
-          <Step n={2} title="Wrap the Bags SDK" body="npm install @pulserouter/sdk. Call router.launchToken() instead of sdk.tokenLaunch directly." />
-          <Step n={3} title="Earn forever" body="Every token launched through you routes a permanent on-chain share of fees to your wallet. Claim anytime." />
+          <Step
+            n={1}
+            title="Pick a unique app_id"
+            body="Choose a slug like 'my-launchpad'. BagsPulse uses it to look up your fee_wallet and BPS share whenever a token launches through PulseRouter."
+          />
+          <Step
+            n={2}
+            title="Wrap the Bags SDK"
+            body="Install @bagsfm/bags-sdk and call createBagsFeeShareConfig with the BagsPulse helper — it auto-injects your wallet plus the 5% protocol cut into the on-chain config."
+          />
+          <Step
+            n={3}
+            title="Earn forever"
+            body="Every token launched through your app_id routes a permanent on-chain share of fees to your wallet. Claim anytime from this page."
+          />
         </div>
       </section>
 
