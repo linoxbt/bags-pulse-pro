@@ -39,17 +39,31 @@ function BasketsPage() {
   const { baskets: publicBaskets } = Route.useLoaderData() as { baskets: Basket[] };
   const wallet = useWallet();
   const [mine, setMine] = useState<Basket[]>([]);
-  const [authed, setAuthed] = useState(false);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Wallet connected => SupabaseSessionBridge has created (or will create)
+  // an anonymous session. Poll briefly until the session lands, then load.
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      const has = !!data.user;
-      setAuthed(has);
-      if (has) loadMine();
-    });
-  }, []);
+    if (!wallet.authenticated) {
+      setMine([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      for (let i = 0; i < 20; i++) {
+        const { data } = await supabase.auth.getSession();
+        if (data.session) break;
+        await new Promise((r) => setTimeout(r, 250));
+      }
+      if (!cancelled) loadMine();
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [wallet.authenticated]);
+
+  const authed = wallet.authenticated;
 
   async function loadMine() {
     setLoading(true);
