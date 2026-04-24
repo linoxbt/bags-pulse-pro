@@ -13,7 +13,7 @@ export const SUPPORTED_CURRENCIES: PaymentCurrency[] = ["SOL", "USDC", "USDT"];
 export type PricingTier = {
   id: "starter" | "pro" | "elite";
   name: string;
-  priceSol: number; // 0 = free
+  priceUsd: number; // 0 = free. Source of truth — SOL is derived from live oracle.
   description: string;
   features: string[];
   highlight?: boolean;
@@ -23,7 +23,7 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "starter",
     name: "Starter",
-    priceSol: 0,
+    priceUsd: 0,
     description: "Free forever — track the entire Bags ecosystem.",
     features: [
       "Live leaderboards (top 50)",
@@ -35,7 +35,7 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "pro",
     name: "Pro",
-    priceSol: 0.2,
+    priceUsd: 2.5,
     description: "Advanced analytics, alerts and unlimited baskets.",
     features: [
       "Everything in Starter",
@@ -50,7 +50,7 @@ export const PRICING_TIERS: PricingTier[] = [
   {
     id: "elite",
     name: "Elite",
-    priceSol: 0.5,
+    priceUsd: 5,
     description: "For creators and apps building on PulseRouter.",
     features: [
       "Everything in Pro",
@@ -67,7 +67,11 @@ export const PRICING_TIERS: PricingTier[] = [
 // Replaced at runtime with a DexScreener fetch when available.
 export const SOL_USD_FALLBACK = 200;
 
-export function priceInCurrency(priceSol: number, currency: PaymentCurrency, solUsd: number): number {
-  if (currency === "SOL") return priceSol;
-  return Number((priceSol * solUsd).toFixed(2));
+export function priceInCurrency(priceUsd: number, currency: PaymentCurrency, solUsd: number): number {
+  if (priceUsd === 0) return 0;
+  if (currency === "SOL") {
+    if (!solUsd || solUsd <= 0) return 0;
+    return Number((priceUsd / solUsd).toFixed(4));
+  }
+  return Number(priceUsd.toFixed(2));
 }
