@@ -1,5 +1,6 @@
-import { useWallet as useSolanaWallet } from "@solana/wallet-adapter-react";
-import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { useContext, useEffect, useState } from "react";
+import { WalletContext } from "@solana/wallet-adapter-react";
+import { WalletModalContext } from "@solana/wallet-adapter-react-ui";
 
 export interface WalletState {
   ready: boolean;
@@ -10,42 +11,43 @@ export interface WalletState {
   logout: () => Promise<void>;
 }
 
-// Safe wrapper around Solana wallet-adapter. When the providers haven't
-// mounted yet (SSR / first paint) the hooks throw — we return a "not
-// configured" state so pages render gracefully.
+// SSR-safe wrapper. The Solana wallet-adapter hooks throw synchronously when
+// no provider is mounted (which is the case during SSR and the first client
+// paint). We read the contexts directly so we can fall back gracefully.
 export function useWallet(): WalletState {
-  try {
-    const { publicKey, connected, connecting, disconnect, wallet } = useSolanaWallet();
-    const { setVisible } = useWalletModal();
-    const address = publicKey ? publicKey.toBase58() : null;
-    return {
-      ready: !connecting,
-      authenticated: connected && !!address,
-      configured: true,
-      address,
-      login: () => setVisible(true),
-      logout: async () => {
-        try {
-          await disconnect();
-        } catch {
-          /* ignore */
-        }
-        // hint TS that wallet is referenced
-        void wallet;
-      },
-    };
-  } catch {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
+
+  const walletCtx = useContext(WalletContext);
+  const modalCtx = useContext(WalletModalContext);
+
+  if (!mounted || !walletCtx || !modalCtx) {
     return {
       ready: false,
       authenticated: false,
       configured: false,
       address: null,
       login: () => {
-        if (typeof window !== "undefined") {
-          window.location.reload();
-        }
+        if (typeof window !== "undefined") window.location.reload();
       },
       logout: async () => {},
     };
   }
+
+  const { publicKey, connected, connecting, disconnect } = walletCtx;
+  const address = publicKey ? publicKey.toBase58() : null;
+  return {
+    ready: !connecting,
+    authenticated: connected && !!address,
+    configured: true,
+    address,
+    login: () => modalCtx.setVisible(true),
+    logout: async () => {
+      try {
+        await disconnect();
+      } catch {
+        /* ignore */
+      }
+    },
+  };
 }
