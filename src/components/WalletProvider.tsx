@@ -29,7 +29,6 @@ function SupabaseSessionBridge() {
           return;
         }
       }
-      // Stamp the wallet address onto the profile (best-effort).
       const { data: u } = await supabase.auth.getUser();
       if (!u.user) return;
       await supabase
@@ -46,6 +45,10 @@ function SupabaseSessionBridge() {
   return null;
 }
 
+// SSR-safe: providers are ALWAYS mounted so any descendant can call
+// useWallet/useConnection without crashing. The wallet adapters list is
+// empty during SSR (avoids touching `window`/`navigator`) and populated on
+// mount. autoConnect waits until after mount for the same reason.
 export function WalletProvider({ children }: { children: ReactNode }) {
   const [rpc, setRpc] = useState<string>(FALLBACK_RPC);
   const [mounted, setMounted] = useState(false);
@@ -58,7 +61,10 @@ export function WalletProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const wallets = useMemo(
-    () => (mounted ? [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()] : []),
+    () =>
+      mounted
+        ? [new PhantomWalletAdapter(), new SolflareWalletAdapter(), new BackpackWalletAdapter()]
+        : [],
     [mounted],
   );
 

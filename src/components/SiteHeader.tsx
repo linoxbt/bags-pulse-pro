@@ -12,6 +12,7 @@ const NAV = [
   { to: "/feed", label: "BagsFeed" },
   { to: "/portfolio", label: "Portfolio" },
   { to: "/baskets", label: "Baskets" },
+  { to: "/swap", label: "Swap" },
   { to: "/router", label: "PulseRouter" },
   { to: "/docs", label: "Docs" },
 ] as const;
@@ -20,8 +21,33 @@ export function SiteHeader() {
   const loc = useLocation();
   const [open, setOpen] = useState(false);
   return (
-    <header className="sticky top-0 z-40 border-b border-border/60 backdrop-blur-xl bg-background/70">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
+    <header className="sticky top-0 z-40 border-b border-border/60 backdrop-blur-xl bg-background/70 overflow-hidden">
+      {/* Animated wave band — mirrors the footer aesthetic */}
+      <div className="pointer-events-none absolute inset-x-0 -bottom-px h-12 overflow-hidden opacity-60">
+        <div className="absolute inset-y-0 left-0 w-[200%] animate-wave-shift" aria-hidden>
+          <svg viewBox="0 0 2400 60" className="h-full w-full" preserveAspectRatio="none" fill="none">
+            <defs>
+              <linearGradient id="headerWaveStroke" x1="0" x2="1" y1="0" y2="0">
+                <stop offset="0%" stopColor="oklch(0.74 0.17 158 / 0.0)" />
+                <stop offset="50%" stopColor="oklch(0.82 0.18 158 / 0.7)" />
+                <stop offset="100%" stopColor="oklch(0.74 0.17 158 / 0.0)" />
+              </linearGradient>
+            </defs>
+            <path
+              d="M0 30 Q 150 5 300 30 T 600 30 T 900 30 T 1200 30 T 1500 30 T 1800 30 T 2100 30 T 2400 30"
+              stroke="url(#headerWaveStroke)"
+              strokeWidth="1.5"
+              fill="none"
+            />
+          </svg>
+        </div>
+        <div
+          className="absolute -bottom-6 left-1/4 h-12 w-1/2 rounded-full bg-primary/20 blur-2xl animate-glow-drift"
+          aria-hidden
+        />
+      </div>
+
+      <div className="relative mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6">
         <Link to="/" className="shrink-0">
           <BagsPulseLogo />
         </Link>
@@ -57,7 +83,7 @@ export function SiteHeader() {
         </div>
       </div>
       {open && (
-        <div className="lg:hidden border-t border-border/60 bg-background/95 backdrop-blur">
+        <div className="lg:hidden border-t border-border/60 bg-background/95 backdrop-blur relative">
           <nav className="mx-auto flex max-w-7xl flex-col px-4 py-3">
             {NAV.map((item) => (
               <Link

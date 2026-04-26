@@ -15,14 +15,17 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listMyBaskets, listPublicBaskets, createBasket, type Basket } from "@/server/baskets";
+import { getMyLicenseTier } from "@/server/licenses";
 import { useWallet } from "@/hooks/useWallet";
 import { ConnectWallet } from "@/components/ConnectWallet";
-import { Plus, Sparkles, Users, Loader2 } from "lucide-react";
+import { Plus, Sparkles, Users, Loader2, Lock } from "lucide-react";
 import { RelativeTime } from "@/components/RelativeTime";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PRICING_TIERS, type TierId } from "@/lib/constants";
+import { shortAddress } from "@/lib/format";
 
 export const Route = createFileRoute("/baskets")({
   head: () => ({
@@ -41,29 +44,37 @@ function BasketsPage() {
   const [mine, setMine] = useState<Basket[]>([]);
   const [open, setOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [tier, setTier] = useState<TierId>("starter");
+  const [sessionReady, setSessionReady] = useState(false);
 
-  // Wallet connected => SupabaseSessionBridge has created (or will create)
-  // an anonymous session. Poll briefly until the session lands, then load.
+  // When the wallet connects, the SupabaseSessionBridge signs the user in
+  // anonymously. Wait for the session to land before hitting authed endpoints.
   useEffect(() => {
     if (!wallet.authenticated) {
       setMine([]);
+      setSessionReady(false);
       return;
     }
     let cancelled = false;
     (async () => {
-      for (let i = 0; i < 20; i++) {
+      for (let i = 0; i < 40; i++) {
         const { data } = await supabase.auth.getSession();
         if (data.session) break;
-        await new Promise((r) => setTimeout(r, 250));
+        await new Promise((r) => setTimeout(r, 200));
       }
-      if (!cancelled) loadMine();
+      if (cancelled) return;
+      setSessionReady(true);
+      loadMine();
+      getMyLicenseTier()
+        .then((res) => {
+          if (!cancelled) setTier(res.tier);
+        })
+        .catch(() => {});
     })();
     return () => {
       cancelled = true;
     };
   }, [wallet.authenticated]);
-
-  const authed = wallet.authenticated;
 
   async function loadMine() {
     setLoading(true);
@@ -71,11 +82,14 @@ function BasketsPage() {
       const res = await listMyBaskets();
       setMine(res.baskets);
     } catch {
-      /* ignore — user not signed in */
+      /* swallow — RLS may not have hydrated yet */
     } finally {
       setLoading(false);
     }
   }
+
+  const tierLimits = useMemo(() => PRICING_TIERS.find((t) => t.id === tier) ?? PRICING_TIERS[0], [tier]);
+  const atLimit = tierLimits.maxBaskets >= 0 && mine.length >= tierLimits.maxBaskets;
 
   return (
     <PageShell>
@@ -86,39 +100,60 @@ function BasketsPage() {
             <p className="text-muted-foreground mt-1 text-sm">
               Curate token baskets with friends. Co-own performance, share alpha.
             </p>
+            {wallet.authenticated && wallet.address && (
+              <p className="text-xs text-muted-foreground mt-2 font-mono">
+                <span className="inline-flex items-center gap-1">
+                  <span className="h-2 w-2 rounded-full bg-success" />
+                  Connected · {shortAddress(wallet.address)}
+                </span>
+                {" · "}plan: <span className="text-primary uppercase">{tier}</span>
+              </p>
+            )}
           </div>
           <div className="flex items-center gap-2">
-            {!wallet.authenticated && <ConnectWallet size="sm" />}
-            <Dialog open={open} onOpenChange={setOpen}>
-              <DialogTrigger asChild>
-                <Button className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground" disabled={!authed}>
-                  <Plus className="h-4 w-4" /> New basket
-                </Button>
-              </DialogTrigger>
-              <CreateBasketDialog
-                onCreated={(b) => {
-                  setOpen(false);
-                  setMine((prev) => [b, ...prev]);
-                  toast.success(`${b.name} created`);
-                }}
-              />
-            </Dialog>
+            {!wallet.authenticated ? (
+              <ConnectWallet size="sm" />
+            ) : (
+              <Dialog open={open} onOpenChange={setOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground"
+                    disabled={!sessionReady || atLimit}
+                  >
+                    {atLimit ? <Lock className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+                    {atLimit ? "Upgrade to add more" : "New basket"}
+                  </Button>
+                </DialogTrigger>
+                <CreateBasketDialog
+                  walletAddress={wallet.address}
+                  onCreated={(b) => {
+                    setOpen(false);
+                    setMine((prev) => [b, ...prev]);
+                    toast.success(`${b.name} created`);
+                  }}
+                />
+              </Dialog>
+            )}
           </div>
         </header>
 
-        {!authed && (
-          <Card className="bg-card/60 border-dashed">
-            <CardContent className="p-6 text-sm text-muted-foreground flex flex-wrap items-center justify-between gap-3">
-              <span>Connect your wallet to create and manage your own baskets.</span>
-              <ConnectWallet size="sm" />
+        {wallet.authenticated && atLimit && (
+          <Card className="bg-gradient-to-br from-primary/15 via-card/60 to-card/60 border-primary/30">
+            <CardContent className="p-5 flex flex-wrap items-center justify-between gap-3 text-sm">
+              <span>
+                You've reached the {tierLimits.maxBaskets}-basket limit on the {tierLimits.name} plan.
+              </span>
+              <Button asChild size="sm" variant="outline">
+                <Link to="/pricing">Upgrade →</Link>
+              </Button>
             </CardContent>
           </Card>
         )}
 
-        {authed && (
+        {wallet.authenticated && (
           <section className="space-y-4">
             <h2 className="text-lg font-semibold">My baskets</h2>
-            {loading ? (
+            {loading || !sessionReady ? (
               <div className="flex items-center gap-2 text-sm text-muted-foreground">
                 <Loader2 className="h-4 w-4 animate-spin" /> Loading…
               </div>
@@ -166,7 +201,7 @@ function BasketsPage() {
 function BasketCard({ b }: { b: Basket }) {
   return (
     <Link to="/baskets/$id" params={{ id: b.id }} className="block group">
-      <Card className="bg-card/60 hover:border-primary/40 transition h-full">
+      <Card className="bg-card/60 hover:border-primary/40 transition h-full hover:-translate-y-0.5">
         <CardHeader className="border-b border-border/50">
           <CardTitle className="text-base flex items-center justify-between">
             <span className="truncate">{b.name}</span>
@@ -178,7 +213,9 @@ function BasketCard({ b }: { b: Basket }) {
         <CardContent className="p-5 space-y-3">
           {b.description && <p className="text-sm text-muted-foreground line-clamp-2">{b.description}</p>}
           <div className="flex items-center justify-between text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" /> shared</span>
+            <span className="inline-flex items-center gap-1">
+              <Users className="h-3 w-3" /> shared
+            </span>
             <RelativeTime date={b.updated_at} />
           </div>
         </CardContent>
@@ -187,7 +224,13 @@ function BasketCard({ b }: { b: Basket }) {
   );
 }
 
-function CreateBasketDialog({ onCreated }: { onCreated: (b: Basket) => void }) {
+function CreateBasketDialog({
+  walletAddress,
+  onCreated,
+}: {
+  walletAddress: string | null;
+  onCreated: (b: Basket) => void;
+}) {
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [isPublic, setIsPublic] = useState(false);
@@ -215,6 +258,9 @@ function CreateBasketDialog({ onCreated }: { onCreated: (b: Basket) => void }) {
         <DialogTitle>New basket</DialogTitle>
         <DialogDescription>Create a shared bag — add tokens and invite friends.</DialogDescription>
       </DialogHeader>
+      <div className="rounded-md bg-secondary/40 px-3 py-2 text-xs text-muted-foreground">
+        Owner: <span className="font-mono text-foreground">{walletAddress ? shortAddress(walletAddress) : "—"}</span>
+      </div>
       <form onSubmit={submit} className="space-y-4">
         <div className="space-y-1.5">
           <Label>Name</Label>
