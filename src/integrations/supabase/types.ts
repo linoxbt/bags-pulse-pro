@@ -164,6 +164,57 @@ export type Database = {
         }
         Relationships: []
       }
+      creator_scorecards: {
+        Row: {
+          computed_at: string
+          creator_wallet: string
+          display_name: string | null
+          fee_yield_pct: number
+          graduated_count: number
+          health_score: number
+          holder_diversity_score: number
+          id: string
+          launches_count: number
+          total_fees_lifetime: number
+          total_holders: number
+          total_market_cap: number
+          total_volume_24h: number
+          trading_activity_score: number
+        }
+        Insert: {
+          computed_at?: string
+          creator_wallet: string
+          display_name?: string | null
+          fee_yield_pct?: number
+          graduated_count?: number
+          health_score?: number
+          holder_diversity_score?: number
+          id?: string
+          launches_count?: number
+          total_fees_lifetime?: number
+          total_holders?: number
+          total_market_cap?: number
+          total_volume_24h?: number
+          trading_activity_score?: number
+        }
+        Update: {
+          computed_at?: string
+          creator_wallet?: string
+          display_name?: string | null
+          fee_yield_pct?: number
+          graduated_count?: number
+          health_score?: number
+          holder_diversity_score?: number
+          id?: string
+          launches_count?: number
+          total_fees_lifetime?: number
+          total_holders?: number
+          total_market_cap?: number
+          total_volume_24h?: number
+          trading_activity_score?: number
+        }
+        Relationships: []
+      }
       fee_claims: {
         Row: {
           amount: number
@@ -258,6 +309,7 @@ export type Database = {
           bps: number
           created_at: string
           description: string | null
+          domain_verified: boolean
           fee_wallet: string
           id: string
           is_active: boolean
@@ -265,6 +317,10 @@ export type Database = {
           total_tokens_launched: number
           updated_at: string
           user_id: string
+          verification_challenge: string | null
+          verification_token: string | null
+          verified_at: string | null
+          wallet_verified: boolean
           website: string | null
         }
         Insert: {
@@ -273,6 +329,7 @@ export type Database = {
           bps: number
           created_at?: string
           description?: string | null
+          domain_verified?: boolean
           fee_wallet: string
           id?: string
           is_active?: boolean
@@ -280,6 +337,10 @@ export type Database = {
           total_tokens_launched?: number
           updated_at?: string
           user_id: string
+          verification_challenge?: string | null
+          verification_token?: string | null
+          verified_at?: string | null
+          wallet_verified?: boolean
           website?: string | null
         }
         Update: {
@@ -288,6 +349,7 @@ export type Database = {
           bps?: number
           created_at?: string
           description?: string | null
+          domain_verified?: boolean
           fee_wallet?: string
           id?: string
           is_active?: boolean
@@ -295,6 +357,10 @@ export type Database = {
           total_tokens_launched?: number
           updated_at?: string
           user_id?: string
+          verification_challenge?: string | null
+          verification_token?: string | null
+          verified_at?: string | null
+          wallet_verified?: boolean
           website?: string | null
         }
         Relationships: []
@@ -409,6 +475,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      has_active_license: {
+        Args: { _strategy_id: string; _user_id: string }
+        Returns: boolean
+      }
+      has_active_license_by_wallet: {
+        Args: { _strategy_id: string; _wallet: string }
+        Returns: boolean
+      }
       is_basket_member: {
         Args: { _basket_id: string; _user_id: string }
         Returns: boolean

@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Loader2, Wallet, CheckCircle2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { BAGSPULSE_TREASURY } from "@/lib/constants";
+import { BAGSPULSE_TREASURY, TIER_STRATEGY_ID } from "@/lib/constants";
 import type { PricingTier, PaymentCurrency } from "@/lib/constants";
 
 interface Props {
@@ -22,9 +22,9 @@ interface Props {
   solUsd: number;
 }
 
-// On-chain subscription payment. Sends a SystemProgram.transfer of SOL
-// from the connected wallet to the BagsPulse treasury, then registers
-// the strategy license via /api/licenses/confirm.
+// On-chain subscription payment. Sends SystemProgram.transfer of SOL from the
+// connected wallet to the BagsPulse treasury, then registers the strategy
+// license via /api/licenses/confirm. License unlocks the matching tier.
 export function SubscribeDialog({ open, onOpenChange, tier, currency, solUsd }: Props) {
   const { publicKey, sendTransaction } = useSolanaWallet();
   const { connection } = useConnection();
@@ -48,10 +48,7 @@ export function SubscribeDialog({ open, onOpenChange, tier, currency, solUsd }: 
     setSubmitting(true);
     setSignature(null);
     try {
-      // Dynamic import keeps web3.js out of the SSR bundle.
-      const { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } = await import(
-        "@solana/web3.js"
-      );
+      const { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } = await import("@solana/web3.js");
       const treasury = new PublicKey(BAGSPULSE_TREASURY);
       const lamports = Math.floor(priceSol * LAMPORTS_PER_SOL);
       if (lamports <= 0) throw new Error("Could not compute SOL amount");
@@ -66,19 +63,19 @@ export function SubscribeDialog({ open, onOpenChange, tier, currency, solUsd }: 
       const sig = await sendTransaction(tx, connection);
       setSignature(sig);
 
-      // Wait briefly for confirmation, then call our license-confirm endpoint
       try {
         await connection.confirmTransaction(sig, "confirmed");
       } catch {
         /* server will re-verify */
       }
 
+      const strategyId = TIER_STRATEGY_ID[tier.id];
       const res = await fetch("/api/licenses/confirm", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           wallet_address: publicKey.toBase58(),
-          strategy_id: tier.id === "elite" ? "group-basket-ai" : "alpha-pulse",
+          strategy_id: strategyId,
           payment_tx: sig,
           amount_sol: priceSol,
         }),
@@ -103,8 +100,7 @@ export function SubscribeDialog({ open, onOpenChange, tier, currency, solUsd }: 
         <DialogHeader>
           <DialogTitle>Subscribe to {tier?.name}</DialogTitle>
           <DialogDescription>
-            Pay on Solana mainnet. Funds settle directly with the BagsPulse treasury — no
-            credit cards, no middlemen.
+            Pay on Solana mainnet. Funds settle directly with the BagsPulse treasury — no credit cards, no middlemen.
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-3 py-2">
@@ -157,7 +153,8 @@ export function SubscribeDialog({ open, onOpenChange, tier, currency, solUsd }: 
               </>
             ) : (
               <>
-                <Wallet className="h-4 w-4" /> Pay {currency === "SOL" ? `${priceSol.toFixed(4)} SOL` : `${priceUsd.toFixed(2)} ${currency}`}
+                <Wallet className="h-4 w-4" />
+                Pay {currency === "SOL" ? `${priceSol.toFixed(4)} SOL` : `${priceUsd.toFixed(2)} ${currency}`}
               </>
             )}
           </Button>

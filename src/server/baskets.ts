@@ -1,7 +1,10 @@
 // Baskets — group portfolios shared with friends. Backed by Supabase
 // (baskets, basket_members, basket_tokens) with RLS enforcing membership.
+// Tier limit on basket count is enforced server-side via getMyLicenseTier.
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { resolveTier } from "@/server/licenses";
+import { PRICING_TIERS } from "@/lib/constants";
 
 export type Basket = {
   id: string;
@@ -36,11 +39,7 @@ export const listMyBaskets = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ baskets: Basket[] }> => {
     const { supabase, userId } = context;
-    // Owned + member-of (RLS makes both safe via is_basket_member)
-    const { data: owned } = await supabase
-      .from("baskets")
-      .select("*")
-      .eq("owner_id", userId);
+    const { data: owned } = await supabase.from("baskets").select("*").eq("owner_id", userId);
     const { data: memberRows } = await supabase
       .from("basket_members")
       .select("basket_id")
@@ -94,6 +93,22 @@ export const createBasket = createServerFn({ method: "POST" })
   .inputValidator((d: { name: string; description?: string; isPublic?: boolean }) => d)
   .handler(async ({ data, context }): Promise<{ basket: Basket }> => {
     const { supabase, userId } = context;
+
+    // Hybrid gate: enforce per-tier basket limit server-side
+    const tier = await resolveTier(supabase, userId);
+    const tierConfig = PRICING_TIERS.find((t) => t.id === tier) ?? PRICING_TIERS[0];
+    if (tierConfig.maxBaskets >= 0) {
+      const { count } = await supabase
+        .from("baskets")
+        .select("id", { count: "exact", head: true })
+        .eq("owner_id", userId);
+      if ((count ?? 0) >= tierConfig.maxBaskets) {
+        throw new Error(
+          `${tierConfig.name} plan allows ${tierConfig.maxBaskets} basket${tierConfig.maxBaskets === 1 ? "" : "s"}. Upgrade to add more.`,
+        );
+      }
+    }
+
     const { data: row, error } = await supabase
       .from("baskets")
       .insert({
@@ -105,7 +120,6 @@ export const createBasket = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
-    // Auto-add owner as member with role "owner"
     await supabase.from("basket_members").insert({
       basket_id: row.id,
       user_id: userId,
@@ -116,7 +130,9 @@ export const createBasket = createServerFn({ method: "POST" })
 
 export const addBasketToken = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: { basketId: string; mint: string; symbol?: string; name?: string; image?: string; targetBps?: number }) => d)
+  .inputValidator(
+    (d: { basketId: string; mint: string; symbol?: string; name?: string; image?: string; targetBps?: number }) => d,
+  )
   .handler(async ({ data, context }) => {
     const { supabase } = context;
     const { error } = await supabase.from("basket_tokens").insert({
