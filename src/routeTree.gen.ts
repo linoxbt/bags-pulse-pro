@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SwapRouteImport } from './routes/swap'
 import { Route as RouterRouteImport } from './routes/router'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
@@ -26,6 +27,11 @@ import { Route as ApiLicensesConfirmRouteImport } from './routes/api.licenses.co
 import { Route as ApiActionsSubscribeRouteImport } from './routes/api.actions.subscribe'
 import { Route as ApiPublicAgentRunRouteImport } from './routes/api.public.agent.run'
 
+const SwapRoute = SwapRouteImport.update({
+  id: '/swap',
+  path: '/swap',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const RouterRoute = RouterRouteImport.update({
   id: '/router',
   path: '/router',
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
+  '/swap': typeof SwapRoute
   '/api/mcp': typeof ApiMcpRoute
   '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
+  '/swap': typeof SwapRoute
   '/api/mcp': typeof ApiMcpRoute
   '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
@@ -155,6 +163,7 @@ export interface FileRoutesById {
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
   '/router': typeof RouterRoute
+  '/swap': typeof SwapRoute
   '/api/mcp': typeof ApiMcpRoute
   '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
@@ -175,6 +184,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/router'
+    | '/swap'
     | '/api/mcp'
     | '/baskets/$id'
     | '/token/$mint'
@@ -193,6 +203,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/router'
+    | '/swap'
     | '/api/mcp'
     | '/baskets/$id'
     | '/token/$mint'
@@ -211,6 +222,7 @@ export interface FileRouteTypes {
     | '/portfolio'
     | '/pricing'
     | '/router'
+    | '/swap'
     | '/api/mcp'
     | '/baskets/$id'
     | '/token/$mint'
@@ -230,6 +242,7 @@ export interface RootRouteChildren {
   PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
   RouterRoute: typeof RouterRoute
+  SwapRoute: typeof SwapRoute
   ApiMcpRoute: typeof ApiMcpRoute
   TokenMintRoute: typeof TokenMintRoute
   ApiActionsSubscribeRoute: typeof ApiActionsSubscribeRoute
@@ -239,6 +252,13 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/swap': {
+      id: '/swap'
+      path: '/swap'
+      fullPath: '/swap'
+      preLoaderRoute: typeof SwapRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/router': {
       id: '/router'
       path: '/router'
@@ -376,6 +396,7 @@ const rootRouteChildren: RootRouteChildren = {
   PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
   RouterRoute: RouterRoute,
+  SwapRoute: SwapRoute,
   ApiMcpRoute: ApiMcpRoute,
   TokenMintRoute: TokenMintRoute,
   ApiActionsSubscribeRoute: ApiActionsSubscribeRoute,
@@ -385,12 +406,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

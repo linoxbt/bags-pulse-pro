@@ -62,7 +62,7 @@ function SwapPage() {
     setQuoting(true);
     const t = setTimeout(() => {
       getSwapQuote({ data: { inputMint: inMint, outputMint: outMint, amount: lamports, slippageBps } })
-        .then((res) => {
+        .then((res: { quote: SwapQuote | null; error?: string }) => {
           if (cancelled) return;
           setQuote(res.quote);
           if (res.error) toast.error(res.error);

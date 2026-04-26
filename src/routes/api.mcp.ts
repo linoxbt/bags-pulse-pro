@@ -206,7 +206,7 @@ async function handleRpc(req: JsonRpcRequest, authHeader: string | null): Promis
       return { jsonrpc: "2.0", id, result: { tools: TOOLS } };
     }
     if (req.method === "tools/call") {
-      const params = req.params ?? {};
+      const params = (req.params ?? {}) as Record<string, unknown>;
       const name = String(params.name ?? "");
       const args = (params.arguments ?? {}) as Record<string, unknown>;
       if (ELITE_GATED.has(name)) {

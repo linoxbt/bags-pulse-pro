@@ -17,7 +17,7 @@ export type SwapQuote = {
   swapMode: "ExactIn" | "ExactOut";
   slippageBps: number;
   priceImpactPct: string;
-  routePlan: unknown[];
+  routePlan: Array<Record<string, unknown>>;
   protocolFeeBps: number;
   protocolFeeRecipient: string;
 };
@@ -50,7 +50,7 @@ export const getSwapQuote = createServerFn({ method: "POST" })
           swapMode: (raw.swapMode as "ExactIn" | "ExactOut") ?? "ExactIn",
           slippageBps: Number(raw.slippageBps ?? data.slippageBps ?? 100),
           priceImpactPct: String(raw.priceImpactPct ?? "0"),
-          routePlan: (raw.routePlan as unknown[]) ?? [],
+          routePlan: (raw.routePlan as Array<Record<string, unknown>>) ?? [],
           protocolFeeBps: PULSEROUTER_PROTOCOL_BPS,
           protocolFeeRecipient: BAGSPULSE_TREASURY,
         },

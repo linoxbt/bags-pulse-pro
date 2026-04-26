@@ -45,31 +45,25 @@ export const Route = createFileRoute("/token/$mint")({
 
 function TokenPage() {
   const { token, scorecard } = Route.useLoaderData();
-  if (!token) return null;
-
-  // Synthetic intraday curve from current price + 24h change for visualization
+  const [copyOk, setCopyOk] = useState(false);
   const series = useMemo(() => {
+    if (!token) return [];
     const base = token.price || 1;
     const change = token.change24h / 100;
     const start = base / (1 + change || 0.0001);
     return Array.from({ length: 24 }, (_, i) => {
       const t = i / 23;
-      // Simple interpolation + small wobble keyed on mint for determinism
       const seed = (token.mint.charCodeAt((i * 3) % token.mint.length) % 7) - 3;
-      return {
-        h: i,
-        v: Math.max(0, start + (base - start) * t + seed * base * 0.005),
-      };
+      return { h: i, v: Math.max(0, start + (base - start) * t + seed * base * 0.005) };
     });
   }, [token]);
-
-  const [copyOk, setCopyOk] = useState(false);
   useEffect(() => {
     if (copyOk) {
       const t = setTimeout(() => setCopyOk(false), 1500);
       return () => clearTimeout(t);
     }
   }, [copyOk]);
+  if (!token) return null;
 
   return (
     <PageShell>

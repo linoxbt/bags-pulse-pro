@@ -4,6 +4,7 @@
 import { useEffect, useState } from "react";
 import animation from "@/assets/bagspulse-lottie.json";
 // We type-import Lottie so TS works, but the actual import is dynamic.
+import type { ComponentType } from "react";
 import type { LottieComponentProps } from "lottie-react";
 
 interface Props {
@@ -12,7 +13,7 @@ interface Props {
 }
 
 export function PulseLoader({ size = 120, label }: Props) {
-  const [LottieCmp, setLottieCmp] = useState<((p: LottieComponentProps) => JSX.Element) | null>(null);
+  const [LottieCmp, setLottieCmp] = useState<ComponentType<LottieComponentProps> | null>(null);
 
   useEffect(() => {
     let cancelled = false;
