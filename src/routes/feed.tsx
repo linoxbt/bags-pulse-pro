@@ -84,7 +84,7 @@ function FeedPage() {
                       <p className="text-sm">
                         <span className="font-semibold">${e.symbol}</span>
                         {e.partner?.verified && (
-                          <ShieldCheck className="inline-block h-3 w-3 text-success ml-1 mb-0.5" title={`via ${e.partner.appName}`} />
+                          <ShieldCheck className="inline-block h-3 w-3 text-success ml-1 mb-0.5" aria-label={`via ${e.partner.appName}`} />
                         )} · {e.message}
                       </p>
                       <p className="text-xs text-muted-foreground font-mono mt-0.5">

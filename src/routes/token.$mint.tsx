@@ -227,9 +227,9 @@ function TokenPage() {
                   <p className="text-xs uppercase tracking-widest text-muted-foreground mb-3">Other launches by this creator</p>
                   <div className="flex flex-wrap gap-2">
                     {scorecard.topTokens
-                      .filter((t) => t.mint !== token.mint)
+                      .filter((t: { mint: string }) => t.mint !== token.mint)
                       .slice(0, 6)
-                      .map((t) => (
+                      .map((t: { mint: string; symbol: string; image: string }) => (
                         <Link
                           key={t.mint}
                           to="/token/$mint"

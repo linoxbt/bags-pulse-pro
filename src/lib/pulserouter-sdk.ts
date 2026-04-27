@@ -1,4 +1,4 @@
-import { BagsSDK, type Config } from "@bagsfm/bags-sdk";
+import { BagsSDK } from "@bagsfm/bags-sdk";
 import { Connection, PublicKey } from "@solana/web3.js";
 
 export type PulseRouterConfig = {

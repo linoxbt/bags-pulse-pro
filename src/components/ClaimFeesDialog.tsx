@@ -104,11 +104,11 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
     setClaiming(true);
     try {
       const mints = Array.from(selected);
-      const { transaction, error } = await buildClaimTransaction({
+      const { transactions, error } = await buildClaimTransaction({
         data: { wallet: wallet.address, mints },
       });
 
-      if (!transaction) {
+      if (!transactions.length) {
         toast.error("On-chain claim unavailable", { description: error ?? "Bags did not return a claim transaction." });
         setClaiming(false);
         return;
@@ -120,20 +120,20 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
         return;
       }
 
-      // Decode the unsigned tx returned by Bags into raw bytes
-      const buf = Uint8Array.from(atob(transaction), (c) => c.charCodeAt(0));
-      // Validate it deserializes (versioned or legacy) — sanity check
-      try {
-        VersionedTransaction.deserialize(buf);
-      } catch {
-        Transaction.from(buf);
-      }
-
       const ep = await getHeliusEndpoints();
       const conn = new Connection(ep.rpc, "confirmed");
-      const { signedTransaction } = await signer.signTransaction({ transaction: buf });
-      const sig = await conn.sendRawTransaction(signedTransaction, { skipPreflight: false });
-      await conn.confirmTransaction(sig, "confirmed");
+      let sig = "";
+      for (const b64 of transactions) {
+        const buf = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
+        try {
+          VersionedTransaction.deserialize(buf);
+        } catch {
+          Transaction.from(buf);
+        }
+        const { signedTransaction } = await signer.signTransaction({ transaction: buf });
+        sig = await conn.sendRawTransaction(signedTransaction, { skipPreflight: false });
+        await conn.confirmTransaction(sig, "confirmed");
+      }
 
       // Record
       const { data: { user } } = await supabase.auth.getUser();

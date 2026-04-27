@@ -78,11 +78,13 @@ export const buildClaimTransaction = createServerFn({ method: "POST" })
         return { transactions: [], error: "Bags API key not configured" };
       }
       try {
-        const sdk = new BagsSDK(apiKey, new Connection(heliusRpc(), "confirmed"));
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sdk = new BagsSDK(apiKey, new Connection(heliusRpc(), "confirmed") as any);
         const claimer = new PublicKey(data.wallet);
         const out: string[] = [];
         for (const m of data.mints) {
-          const txs = await sdk.fee.getClaimTransactions(claimer, new PublicKey(m));
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const txs = await sdk.fee.getClaimTransactions(claimer as any, new PublicKey(m) as any);
           for (const tx of txs) {
             const serialized = tx.serialize({
               requireAllSignatures: false,

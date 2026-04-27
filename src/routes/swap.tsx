@@ -89,12 +89,26 @@ function SwapPage() {
     setSwapping(true);
     setSignature(null);
     try {
+      const { VersionedTransaction, Transaction } = await import("@solana/web3.js");
+      const payer = solana.publicKey.toBase58();
+
+      // 1) Ensure treasury fee ATA for the output mint exists.
+      const { prepareFeeAccount } = await import("@/server/swap");
+      const prep = await prepareFeeAccount({ data: { outputMint: outMint, payer } });
+      if (!prep.exists && prep.createTx) {
+        const cbuf = Uint8Array.from(atob(prep.createTx), (c) => c.charCodeAt(0));
+        const ctx = Transaction.from(cbuf);
+        const csigned = await solana.signTransaction(ctx);
+        const csig = await connection.sendRawTransaction(csigned.serialize(), { skipPreflight: false });
+        await connection.confirmTransaction(csig, "confirmed");
+      }
+
+      // 2) Build + send the Jupiter swap tx with the referral ATA as feeAccount.
       const { swapTransaction, error } = await buildSwapTransaction({
-        data: { quote, userPublicKey: solana.publicKey.toBase58() },
+        data: { quote, userPublicKey: payer, feeAccount: prep.feeAccount },
       });
       if (!swapTransaction) throw new Error(error ?? "Could not build swap transaction");
 
-      const { VersionedTransaction } = await import("@solana/web3.js");
       const buf = Uint8Array.from(atob(swapTransaction), (c) => c.charCodeAt(0));
       const tx = VersionedTransaction.deserialize(buf);
       const signed = await solana.signTransaction(tx);

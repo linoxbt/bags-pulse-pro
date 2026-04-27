@@ -16,7 +16,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { formatNumber, formatUsd, shortAddress } from "@/lib/format";
-import { CheckCircle2, Coins, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles } from "lucide-react";
+import { CheckCircle2, Coins, Loader2, Shield, ShieldCheck, ShieldAlert, Sparkles, Zap } from "lucide-react";
 import { ConnectWallet } from "@/components/ConnectWallet";
 import { ClaimFeesDialog } from "@/components/ClaimFeesDialog";
 import { useWallet } from "@/hooks/useWallet";
