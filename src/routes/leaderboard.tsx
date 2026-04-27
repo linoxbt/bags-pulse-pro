@@ -9,7 +9,7 @@ import { formatNumber, formatPct, formatUsd } from "@/lib/format";
 import type { Token } from "@/server/bags";
 import { useMemo, useState } from "react";
 import { cn } from "@/lib/utils";
-import { Search, Star } from "lucide-react";
+import { Search, Star, ShieldCheck } from "lucide-react";
 
 export const Route = createFileRoute("/leaderboard")({
   head: () => ({
@@ -20,6 +20,17 @@ export const Route = createFileRoute("/leaderboard")({
   }),
   loader: () => fetchTokens(),
   component: LeaderboardPage,
+  pendingComponent: () => (
+    <PageShell>
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 py-10 space-y-6">
+        <div className="space-y-2">
+          <div className="h-9 w-64 bg-primary/10 animate-pulse rounded" />
+          <div className="h-4 w-96 bg-primary/5 animate-pulse rounded" />
+        </div>
+        <div className="h-[600px] w-full bg-card/40 animate-pulse rounded-xl border border-border/50" />
+      </div>
+    </PageShell>
+  ),
 });
 
 type SortKey = "marketCap" | "volume24h" | "holders" | "feesEarned24h" | "change24h";
@@ -106,13 +117,21 @@ function LeaderboardPage() {
                           <div className="min-w-0">
                             <Link to="/token/$mint" params={{ mint: t.mint }} className="font-medium flex items-center gap-1 hover:text-primary">
                               ${t.symbol}
+                              {t.partner?.verified && (
+                                <ShieldCheck className="h-3 w-3 text-success" title={`Launched via ${t.partner.appName}`} />
+                              )}
                               {t.graduated && (
                                 <span className="text-[10px] font-mono uppercase rounded bg-accent/15 text-accent px-1 py-0.5">
                                   graduated
                                 </span>
                               )}
                             </Link>
-                            <p className="text-xs text-muted-foreground truncate max-w-[180px]">{t.name}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-[180px]">
+                              {t.name}
+                              {t.partner && !t.partner.verified && (
+                                <span className="ml-1 opacity-50 text-[10px]">via {t.partner.appName}</span>
+                              )}
+                            </p>
                           </div>
                         </div>
                       </td>

@@ -100,13 +100,21 @@ export const Route = createFileRoute("/api/public/agent/run")({
         try {
           const { tokens } = await fetchTokens();
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const baskets = await (supabaseAdmin.from("baskets") as any)
-            .select("id,name,owner_id")
+          // 1. Fetch Baskets that belong to Pro/Elite users
+          // Join with strategy_licenses to ensure premium access
+          const { data: premiumBaskets, error: bError } = await supabaseAdmin
+            .from("baskets")
+            .select(`
+              id, name, owner_id,
+              owner_licenses:strategy_licenses!inner(strategy_id, status)
+            `)
             .eq("is_public", true)
-            .limit(20);
+            .in("strategy_licenses.strategy_id", ["alpha-pulse", "group-basket-ai"])
+            .eq("strategy_licenses.status", "active")
+            .limit(15); // Limit per batch to avoid timeouts
 
-          if (baskets.error) throw new Error(baskets.error.message);
-          const list = (baskets.data ?? []) as Basket[];
+          if (bError) throw new Error(bError.message);
+          const list = (premiumBaskets ?? []) as any[];
           const proposals: Array<{ basket_id: string; ok: boolean }> = [];
 
           for (const basket of list) {

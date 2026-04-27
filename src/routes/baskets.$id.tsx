@@ -12,9 +12,10 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { ExecuteBasketDialog } from "@/components/ExecuteBasketDialog";
 import { getBasket, addBasketToken, type Basket, type BasketToken, type BasketMember } from "@/server/baskets";
 import { fetchTokens, type Token } from "@/server/bags";
-import { ArrowLeft, Coins, Loader2, Plus, Users } from "lucide-react";
+import { ArrowLeft, Coins, Loader2, Plus, Users, Zap } from "lucide-react";
 import { RelativeTime } from "@/components/RelativeTime";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -70,6 +71,7 @@ function BasketDetailPage() {
   };
   const router = useRouter();
   const [open, setOpen] = useState(false);
+  const [execOpen, setExecOpen] = useState(false);
   const tokenMap = new Map(data.allTokens.map((t) => [t.mint, t]));
   const enriched = data.tokens.map((bt) => {
     const live = tokenMap.get(bt.mint);
@@ -110,6 +112,33 @@ function BasketDetailPage() {
               }}
             />
           </Dialog>
+
+          <div className="flex flex-wrap gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                toast.success("Link copied to clipboard");
+              }}
+            >
+              Share
+            </Button>
+
+            <Button 
+              variant="outline" 
+              onClick={() => setExecOpen(true)}
+              className="border-primary/50 text-primary hover:bg-primary/10"
+            >
+              <Zap className="h-4 w-4 mr-2" /> Buy basket
+            </Button>
+          </div>
+
+          <ExecuteBasketDialog
+            basket={data.basket}
+            tokens={data.tokens}
+            open={execOpen}
+            onOpenChange={setExecOpen}
+          />
         </header>
 
         <div className="grid gap-4 md:grid-cols-3">

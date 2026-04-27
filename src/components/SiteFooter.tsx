@@ -59,12 +59,14 @@ export function SiteFooter() {
           <Link to="/leaderboard" className="block text-muted-foreground hover:text-foreground">Leaderboard</Link>
           <Link to="/feed" className="block text-muted-foreground hover:text-foreground">BagsFeed</Link>
           <Link to="/portfolio" className="block text-muted-foreground hover:text-foreground">Portfolio</Link>
+          <Link to="/referrals" className="block text-muted-foreground hover:text-foreground">Referrals</Link>
         </div>
         <div className="space-y-2 text-sm">
           <p className="font-semibold mb-3">Protocol</p>
           <Link to="/router" className="block text-muted-foreground hover:text-foreground">PulseRouter</Link>
           <Link to="/docs" className="block text-muted-foreground hover:text-foreground">Developer docs</Link>
           <Link to="/pricing" className="block text-muted-foreground hover:text-foreground">Pricing</Link>
+          <Link to="/legal" className="block text-muted-foreground hover:text-foreground">Legal</Link>
         </div>
       </div>
       <div className="relative border-t border-border/60">

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { fetchTokenDetail } from "@/server/bags";
 import { getCreatorScorecard, type Scorecard } from "@/server/scorecards";
 import { formatNumber, formatPct, formatUsd, shortAddress, timeAgo } from "@/lib/format";
-import { Copy, ExternalLink, Sparkles, TrendingUp, Users, Wallet } from "lucide-react";
+import { Copy, ExternalLink, Sparkles, TrendingUp, Users, Wallet, ShieldCheck } from "lucide-react";
 import { toast } from "sonner";
 import { ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip } from "recharts";
 import { useEffect, useMemo, useState } from "react";
@@ -81,7 +81,12 @@ function TokenPage() {
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="text-3xl font-semibold">${token.symbol}</h1>
-                {token.graduated && <Badge>Graduated</Badge>}
+                {token.partner?.verified && (
+                  <Badge variant="outline" className="border-success/50 text-success bg-success/5 gap-1 py-0 px-1.5 h-6">
+                    <ShieldCheck className="h-3 w-3" /> Verified Partner
+                  </Badge>
+                )}
+                {token.graduated && <Badge variant="secondary">Graduated</Badge>}
               </div>
               <p className="text-muted-foreground flex items-center gap-2 text-sm mt-1">
                 {token.name}
@@ -169,6 +174,9 @@ function TokenPage() {
               <Row label="Mint" value={token.mint} />
               <Row label="Creator" value={token.creatorWallet || token.creator} />
               <Row label="Launched" value={timeAgo(token.launchedAt)} />
+              {token.partner && (
+                <Row label="Launch partner" value={token.partner.appName} />
+              )}
               <Row label="DBC pool" value={token.dbcPoolKey || "—"} />
               <Row label="DAMM v2 pool" value={token.dammV2PoolKey || "—"} />
             </CardContent>

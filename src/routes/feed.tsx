@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { fetchFeed, type FeedEvent } from "@/server/bags";
 import { formatNumber } from "@/lib/format";
 import { RelativeTime } from "@/components/RelativeTime";
-import { ArrowDownRight, ArrowUpRight, GraduationCap, Megaphone, Rocket, Sparkles } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, GraduationCap, Megaphone, Rocket, Sparkles, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useState } from "react";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -82,7 +82,10 @@ function FeedPage() {
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm">
-                        <span className="font-semibold">${e.symbol}</span> · {e.message}
+                        <span className="font-semibold">${e.symbol}</span>
+                        {e.partner?.verified && (
+                          <ShieldCheck className="inline-block h-3 w-3 text-success ml-1 mb-0.5" title={`via ${e.partner.appName}`} />
+                        )} · {e.message}
                       </p>
                       <p className="text-xs text-muted-foreground font-mono mt-0.5">
                         {e.actor} · <RelativeTime date={e.at} />

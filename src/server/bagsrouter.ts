@@ -1,5 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { BagsSDK } from "@bagsfm/bags-sdk";
+import { Connection, PublicKey, ComputeBudgetProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
+import { supabaseAdmin } from "@/integrations/supabase/client.server";
 
 const BAGS_BASE = "https://public-api-v2.bags.fm/api/v1";
 
@@ -63,21 +66,51 @@ export const buildClaimTransaction = createServerFn({ method: "POST" })
       return { transaction: null, error: "Bags API key not configured" };
     }
     try {
-      const res = await fetch(`${BAGS_BASE}/token-launch/claim-txs/v3`, {
-        method: "POST",
-        headers: {
-          "x-api-key": apiKey,
-          "content-type": "application/json",
-          accept: "application/json",
-        },
-        body: JSON.stringify({ feeClaimer: data.wallet, tokenMint: data.mints[0] }),
+      const rpc = process.env.HELIUS_API_KEY
+        ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
+        : "https://api.mainnet-beta.solana.com";
+      const sdk = new BagsSDK({ apiKey, connection: new Connection(rpc) });
+
+      // Build the claim instruction via the official SDK
+      const claimer = new PublicKey(data.wallet);
+      const mints = data.mints.map(m => new PublicKey(m));
+      
+      const tx = await sdk.tokenLaunch.claimFees({
+        feeClaimer: claimer,
+        tokenMints: mints,
       });
-      if (!res.ok) {
-        return { transaction: null, error: `Bags returned ${res.status}` };
-      }
-      const json = (await res.json()) as { transaction?: string; response?: string | { transaction?: string } };
-      const responseTx = typeof json.response === "string" ? json.response : json.response?.transaction;
-      return { transaction: json.transaction ?? responseTx ?? null };
+
+      // Add priority fees to the transaction
+      const priorityFeeInstruction = ComputeBudgetProgram.setComputeUnitPrice({
+        microLamports: 100_000, // 0.1 lamports/CU - reasonable for landing fast
+      });
+
+      // To add an instruction to a VersionedTransaction, we need to decompile and recompile
+      // OR the SDK might have already included one.
+      // For simplicity, let's assume we want to ensure it has one.
+      
+      const { blockhash } = await sdk.connection.getLatestBlockhash();
+      
+      // Decompile the transaction message
+      const addressLookupTableAccounts = await Promise.all(
+        tx.message.addressTableLookups.map(async (lookup) => {
+          return (await sdk.connection.getAddressLookupTable(lookup.accountKey)).value;
+        })
+      );
+      
+      const message = TransactionMessage.decompile(tx.message, {
+        addressLookupTableAccounts: addressLookupTableAccounts.filter((a): a is any => a !== null),
+      });
+
+      // Add the priority fee instruction at the beginning
+      message.instructions.unshift(priorityFeeInstruction);
+
+      // Recompile
+      const newMessage = message.compileToV0Message(addressLookupTableAccounts.filter((a): a is any => a !== null));
+      const newTx = new VersionedTransaction(newMessage);
+
+      const base64 = Buffer.from(newTx.serialize()).toString("base64");
+      return { transaction: base64 };
     } catch (e) {
       return { transaction: null, error: (e as Error).message };
     }

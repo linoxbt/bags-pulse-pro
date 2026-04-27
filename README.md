@@ -16,8 +16,9 @@ BagsPulse is a complete operating layer on top of [Bags.fm](https://bags.fm) —
 
 1. **Pulse Dashboard** — Real-time leaderboards (top 50), creator scorecards, market-cap and volume charts, and ecosystem KPIs refreshed live from the Bags v2 public API and DexScreener.
 2. **BagsFeed** — Live social finance feed of launches, graduations, **buys**, **sells**, **fee claims**, and milestones, parsed from on-chain transactions via Helius.
-3. **Portfolio + Baskets** — Connect a Solana wallet (Phantom, Solflare, Backpack) and we read every SPL token via Helius DAS, price it via DexScreener, and split your holdings into Bags-ecosystem vs other. Co-manage *group baskets* with friends, with shared P&L.
+3. **Portfolio + Baskets** — Connect a Solana wallet and manage multi-token *group baskets*. Includes a "One-Click Buy" execution engine that splits SOL across tokens via Jupiter.
 4. **PulseRouter** — A registered-app fee-split protocol. Wrap the Bags SDK once, and every token launched through your app routes a permanent on-chain share of fees to your wallet, the creator, and the BagsPulse treasury.
+5. **Autonomous Analyst** — An AI-driven agent that runs autonomous rebalance proposals for Pro/Elite baskets, accessible via REST or MCP.
 
 Key differentiators:
 - **Live everywhere.** No mock data. Tokens, prices, holdings, fees, and feed events all come from production sources.
@@ -188,10 +189,14 @@ The Solana publishable details (`VITE_SUPABASE_URL`, `VITE_SUPABASE_PUBLISHABLE_
 
 ## Roadmap
 
-- [ ] Bags partner-key activation for on-chain fee splitting
+- [x] Bags partner-key activation for on-chain fee splitting
+- [x] Multi-token "Buy Basket" execution via Jupiter
+- [x] Autonomous Agent proposals for basket rebalancing
+- [x] Public MCP server for any agent to query the Bags ecosystem
+- [x] Developer SDK for PulseRouter integration
+- [x] Referral program for social-finance rewards
 - [ ] Cross-basket P&L analytics (cost basis from on-chain history)
 - [ ] Telegram / X notifications for whale buys & milestones
-- [ ] Public MCP server for any agent to query the Bags ecosystem
 - [ ] Strategy marketplace (`strategy_licenses` table + cNFT receipts)
 
 ---

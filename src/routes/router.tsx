@@ -179,33 +179,80 @@ function RouterPage() {
         </div>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-12">
-        <Card className="bg-card/60">
-          <CardHeader className="border-b border-border/50">
-            <CardTitle className="text-base">Default fee allocation per launch</CardTitle>
-          </CardHeader>
-          <CardContent className="p-6 space-y-5">
-            <div className="h-3 rounded-full overflow-hidden flex bg-secondary">
-              <div className="bg-primary" style={{ width: "80%" }} title="Creator" />
-              <div className="bg-accent" style={{ width: "15%" }} title="App" />
-              <div className="bg-chart-3" style={{ width: "5%" }} title="Protocol" />
-            </div>
-            <div className="grid sm:grid-cols-3 gap-4 text-sm">
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-primary" /> Creator · 80% (8000 BPS)
+      <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-12 space-y-6">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-semibold tracking-tight">Builder tools</h2>
+          <Badge variant="outline" className="text-primary border-primary/30">Developer Preview</Badge>
+        </div>
+        <div className="grid lg:grid-cols-2 gap-6">
+          <Card className="bg-card/60">
+            <CardHeader className="border-b border-border/50">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Sparkles className="h-4 w-4 text-primary" /> Default fee allocation
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6 space-y-5">
+              <div className="h-3 rounded-full overflow-hidden flex bg-secondary">
+                <div className="bg-primary" style={{ width: "80%" }} title="Creator" />
+                <div className="bg-accent" style={{ width: "15%" }} title="App" />
+                <div className="bg-chart-3" style={{ width: "5%" }} title="Protocol" />
               </div>
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-accent" /> Your app · 15% (1500 BPS)
+              <div className="grid sm:grid-cols-3 gap-4 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-sm bg-primary" /> Creator · 80%
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-sm bg-accent" /> Your app · 15%
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="h-3 w-3 rounded-sm bg-chart-3" /> Protocol · 5%
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="h-3 w-3 rounded-sm bg-chart-3" /> PulseRouter protocol · 5% (500 BPS)
+              <p className="text-xs text-muted-foreground font-mono leading-relaxed">
+                Fees are split directly inside the Bags fee program. BPS always sums to 10,000.
+                Protocol treasury: <span className="text-foreground">6CxhRUpZ…BaEzhd</span>
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-background/40 border-primary/20">
+            <CardHeader className="border-b border-border/50">
+              <CardTitle className="text-base flex items-center gap-2">
+                <Zap className="h-4 w-4 text-primary" /> Integration snippet
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <div className="relative group">
+                <pre className="p-4 rounded-lg bg-secondary/30 font-mono text-[11px] overflow-x-auto leading-relaxed">
+{`// Install @bagspulse/sdk
+import { PulseRouter } from "@bagspulse/sdk";
+
+const router = new PulseRouter({
+  appId: "${myPartner?.app_id || 'your-app-id'}",
+});
+
+// Auto-generate fee config for launch
+const config = await router.getLaunchConfig(creatorPubKey);
+// -> Routes 15% to your wallet, 5% to Pulse`}
+                </pre>
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`import { PulseRouter } from "@bagspulse/sdk";\n\nconst router = new PulseRouter({\n  appId: "${myPartner?.app_id || 'your-app-id'}",\n});`);
+                    toast.success("Snippet copied");
+                  }}
+                >
+                  Copy
+                </Button>
               </div>
-            </div>
-            <p className="text-xs text-muted-foreground font-mono">
-              Rooted in Bags fee program FEE2tBhCKAt7shrod19QttSVREUYPiyMzoku1mL1gqVK · BPS sums to 10,000
-            </p>
-          </CardContent>
-        </Card>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Use this to wrap the Bags SDK launch call. We resolve your registered fee wallet and BPS automatically.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
       </section>
 
       <section className="mx-auto max-w-7xl px-4 sm:px-6 pb-16">

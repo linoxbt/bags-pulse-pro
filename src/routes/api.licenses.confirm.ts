@@ -1,6 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { computeSplit, DEFAULT_SPLIT } from "@/server/feeSplit";
+import { BAGSPULSE_TREASURY, SOL_MINT, USDC_MINT, USDT_MINT, PRICING_TIERS, TIER_STRATEGY_ID } from "@/lib/constants";
+import { Connection, PublicKey } from "@solana/web3.js";
+import { getAssociatedTokenAddress } from "@solana/spl-token";
 
 // Confirm a Blink subscription payment, register the strategy license, and
 // route the fee split through PulseRouter accounting.
@@ -26,41 +29,104 @@ export const Route = createFileRoute("/api/licenses/confirm")({
             wallet_address: string;
             strategy_id: string;
             payment_tx: string;
-            amount_sol: number;
+            amount: number;
+            payment_token: "SOL" | "USDC" | "USDT";
             creator_wallet?: string;
           };
 
-          if (!body.wallet_address || !body.payment_tx || !body.strategy_id) {
+          if (!body.wallet_address || !body.payment_tx || !body.strategy_id || !body.payment_token) {
             return new Response(JSON.stringify({ error: "missing fields" }), {
               status: 400,
               headers: { "Content-Type": "application/json", ...CORS },
             });
           }
 
-          // Verify the transaction landed on-chain via Helius RPC
-          const rpc = process.env.HELIUS_API_KEY
+          // 1. Verify the transaction landed on-chain and is successful
+          const rpcUrl = process.env.HELIUS_API_KEY
             ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
             : "https://api.mainnet-beta.solana.com";
-          const sigRes = await fetch(rpc, {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({
-              jsonrpc: "2.0",
-              id: 1,
-              method: "getSignatureStatuses",
-              params: [[body.payment_tx], { searchTransactionHistory: true }],
-            }),
+          const connection = new Connection(rpcUrl, "confirmed");
+          
+          const tx = await connection.getTransaction(body.payment_tx, {
+            maxSupportedTransactionVersion: 0,
+            commitment: "confirmed"
           });
-          const sigJson = (await sigRes.json()) as { result?: { value?: Array<{ confirmationStatus?: string } | null> } };
-          const status = sigJson.result?.value?.[0]?.confirmationStatus;
-          if (!status || (status !== "confirmed" && status !== "finalized")) {
-            return new Response(
-              JSON.stringify({ error: "payment not confirmed yet", status }),
-              { status: 402, headers: { "Content-Type": "application/json", ...CORS } },
-            );
+
+          if (!tx) {
+            return new Response(JSON.stringify({ error: "Transaction not found" }), {
+              status: 404,
+              headers: { "Content-Type": "application/json", ...CORS },
+            });
           }
 
-          const lamports = Math.floor(body.amount_sol * 1_000_000_000);
+          if (tx.meta?.err) {
+            return new Response(JSON.stringify({ error: "Transaction failed on-chain" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json", ...CORS },
+            });
+          }
+
+          // 2. Verify signer = caller's wallet
+          const signer = tx.transaction.message.staticAccountKeys[0].toBase58();
+          if (signer !== body.wallet_address) {
+             return new Response(JSON.stringify({ error: "Signer mismatch" }), {
+              status: 403,
+              headers: { "Content-Type": "application/json", ...CORS },
+            });
+          }
+
+          // 3. Find the tier to verify price
+          const tier = PRICING_TIERS.find(t => TIER_STRATEGY_ID[t.id] === body.strategy_id);
+          if (!tier) throw new Error("Invalid strategy ID");
+
+          // 4. Verify recipient and amount
+          const treasuryPubKey = new PublicKey(BAGSPULSE_TREASURY);
+          let verified = false;
+
+          if (body.payment_token === "SOL") {
+            const expectedLamports = Math.floor(body.amount * 1_000_000_000);
+            // Check pre/post balances for the treasury to confirm payment
+            const treasuryIndex = tx.transaction.message.staticAccountKeys.findIndex(k => k.equals(treasuryPubKey));
+            if (treasuryIndex !== -1) {
+              const preBalance = tx.meta?.preBalances[treasuryIndex] || 0;
+              const postBalance = tx.meta?.postBalances[treasuryIndex] || 0;
+              if (postBalance - preBalance >= expectedLamports) {
+                verified = true;
+              }
+            }
+          } else {
+            // SPL Token (USDC/USDT)
+            const mint = body.payment_token === "USDC" ? USDC_MINT : USDT_MINT;
+            const decimals = 6;
+            const expectedTokenAmount = Math.floor(body.amount * Math.pow(10, decimals));
+            
+            // Derive treasury ATA
+            const treasuryAta = await getAssociatedTokenAddress(new PublicKey(mint), treasuryPubKey);
+            
+            // Check token balances in metadata
+            const preTokenBalance = tx.meta?.preTokenBalances?.find(b => b.owner === BAGSPULSE_TREASURY && b.mint === mint);
+            const postTokenBalance = tx.meta?.postTokenBalances?.find(b => b.owner === BAGSPULSE_TREASURY && b.mint === mint);
+            
+            const preAmount = Number(preTokenBalance?.uiTokenAmount.amount || 0);
+            const postAmount = Number(postTokenBalance?.uiTokenAmount.amount || 0);
+
+            if (postAmount - preAmount >= expectedTokenAmount) {
+              verified = true;
+            }
+          }
+
+          if (!verified) {
+            return new Response(JSON.stringify({ error: "Payment verification failed (amount or recipient mismatch)" }), {
+              status: 400,
+              headers: { "Content-Type": "application/json", ...CORS },
+            });
+          }
+
+          // Success - proceed with license insertion
+          const lamports = body.payment_token === "SOL" 
+            ? Math.floor(body.amount * 1_000_000_000)
+            : 0; // We split SOL immediately; SPL tokens stay in treasury for now or managed separately
+
           const split = computeSplit(lamports);
           const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(); // 30 days
 
@@ -74,8 +140,8 @@ export const Route = createFileRoute("/api/licenses/confirm")({
             strategy_id: body.strategy_id,
             cnft_mint: cnftMint,
             payment_tx: body.payment_tx,
-            amount_paid: body.amount_sol,
-            payment_token: "SOL",
+            amount_paid: body.amount,
+            payment_token: body.payment_token,
             expires_at: expiresAt,
             status: "active",
           });

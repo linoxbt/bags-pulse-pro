@@ -24,6 +24,9 @@ import { getHeliusEndpoints } from "@/server/helius";
 import { formatUsd } from "@/lib/format";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getMyLicenseTier, tierAtLeast, type LicenseSummary } from "@/server/licenses";
+import { Badge } from "@/components/ui/badge";
+import { Sparkles, Info } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -38,14 +41,29 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
   const [loading, setLoading] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [claiming, setClaiming] = useState(false);
+  const [license, setLicense] = useState<LicenseSummary | null>(null);
 
   useEffect(() => {
     if (!open || !wallet.address) return;
     setLoading(true);
-    getClaimablePositions({ data: { wallet: wallet.address } }).then((res) => {
-      setPositions(res.positions);
-      setLive(res.live);
-      setSelected(new Set(res.positions.map((p) => p.mint)));
+    
+    // Parallel load positions and license
+    Promise.all([
+      getClaimablePositions({ data: { wallet: wallet.address } }),
+      getMyLicenseTier()
+    ]).then(([posRes, licRes]) => {
+      setPositions(posRes.positions);
+      setLive(posRes.live);
+      setLicense(licRes);
+      
+      // If Pro/Elite, default select all. If Starter, select top 1.
+      if (posRes.positions.length > 0) {
+        if (licRes.tier === "starter") {
+          setSelected(new Set([posRes.positions[0].mint]));
+        } else {
+          setSelected(new Set(posRes.positions.map((p) => p.mint)));
+        }
+      }
       setLoading(false);
     });
   }, [open, wallet.address]);
@@ -56,8 +74,22 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
 
   function toggle(mint: string) {
     const next = new Set(selected);
-    if (next.has(mint)) next.delete(mint);
-    else next.add(mint);
+    if (next.has(mint)) {
+      next.delete(mint);
+    } else {
+      // Enforce Starter limit
+      if (license?.tier === "starter" && selected.size >= 1) {
+        toast.info("Upgrade to Pro for batch claiming", {
+          description: "Starter tier can only claim one position at a time.",
+          action: {
+            label: "Upgrade",
+            onClick: () => (window.location.href = "/pricing"),
+          },
+        });
+        return;
+      }
+      next.add(mint);
+    }
     setSelected(next);
   }
 
@@ -131,9 +163,21 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Coins className="h-5 w-5 text-primary" /> Claim creator fees
-          </DialogTitle>
+          <div className="flex items-center justify-between pr-6">
+            <DialogTitle className="flex items-center gap-2">
+              <Coins className="h-5 w-5 text-primary" /> Claim creator fees
+            </DialogTitle>
+            {license && (
+              <Badge variant="outline" className={cn(
+                "capitalize font-mono text-[10px] px-1.5 py-0",
+                license.tier === "elite" ? "border-accent text-accent bg-accent/5" :
+                license.tier === "pro" ? "border-primary text-primary bg-primary/5" : 
+                "border-muted text-muted-foreground"
+              )}>
+                {license.tier} Plan
+              </Badge>
+            )}
+          </div>
           <DialogDescription>
             {live ? "Live claimable positions from the Bags fee program." : "Connect a wallet with active fees to see claimable positions."}
           </DialogDescription>
@@ -158,37 +202,71 @@ export function ClaimFeesDialog({ open, onOpenChange }: Props) {
           </div>
         ) : (
           <>
-            <ul className="divide-y divide-border/60 max-h-72 overflow-y-auto -mx-2">
-              {positions.map((p) => (
-                <li
-                  key={p.mint}
-                  className="flex items-center gap-3 px-2 py-3 hover:bg-secondary/30 rounded-md"
-                >
-                  <Checkbox
-                    checked={selected.has(p.mint)}
-                    onCheckedChange={() => toggle(p.mint)}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium">${p.symbol}</p>
-                    <p className="text-xs text-muted-foreground truncate">{p.name}</p>
+            <div className="py-2">
+              {license?.tier === "starter" && positions.length > 1 && (
+                <div className="mb-3 rounded-lg border border-primary/20 bg-primary/5 p-3 flex gap-3 items-start">
+                  <Sparkles className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <p className="text-xs font-semibold">Unlock Batch Claiming</p>
+                    <p className="text-[11px] text-muted-foreground leading-normal">
+                      You have {positions.length} positions. Pro & Elite users can claim them all in a single transaction to save time and rent.
+                    </p>
+                    <Button variant="link" className="h-auto p-0 text-[11px] text-primary" asChild>
+                      <Link to="/pricing">Upgrade now →</Link>
+                    </Button>
                   </div>
-                  <div className="text-right">
-                    <p className="font-mono text-sm">{p.amount.toFixed(4)} SOL</p>
-                    <p className="text-xs font-mono text-success">{formatUsd(p.amountUsd)}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-            <DialogFooter className="flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
-              <p className="text-sm text-muted-foreground">
-                Total: <span className="font-mono font-semibold text-foreground">{formatUsd(total)}</span>
-              </p>
+                </div>
+              )}
+              <ul className="divide-y divide-border/60 max-h-72 overflow-y-auto -mx-2">
+                {positions.map((p) => (
+                  <li
+                    key={p.mint}
+                    className={cn(
+                      "flex items-center gap-3 px-2 py-3 hover:bg-secondary/30 rounded-md transition",
+                      !selected.has(p.mint) && license?.tier === "starter" && selected.size > 0 && "opacity-60"
+                    )}
+                  >
+                    <Checkbox
+                      checked={selected.has(p.mint)}
+                      onCheckedChange={() => toggle(p.mint)}
+                      disabled={!selected.has(p.mint) && license?.tier === "starter" && selected.size >= 1}
+                    />
+                    <div className="flex-1 min-w-0" onClick={() => toggle(p.mint)}>
+                      <p className="font-medium truncate">${p.symbol}</p>
+                      <p className="text-[10px] text-muted-foreground truncate uppercase font-mono">{p.mint.slice(0, 4)}…{p.mint.slice(-4)}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-mono text-sm">{p.amount.toFixed(4)} SOL</p>
+                      <p className="text-xs font-mono text-success">{formatUsd(p.amountUsd)}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <DialogFooter className="flex-col sm:flex-row sm:justify-between sm:items-center gap-2 pt-2 border-t border-border/50">
+              <div className="space-y-0.5">
+                <p className="text-sm text-muted-foreground">
+                  Total: <span className="font-mono font-semibold text-foreground">{formatUsd(total)}</span>
+                </p>
+                <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                  <Info className="h-3 w-3" /> SOL rent will be reclaimed to your wallet
+                </p>
+              </div>
               <Button
                 onClick={handleClaim}
                 disabled={claiming || selected.size === 0}
-                className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground"
+                className="bg-gradient-to-r from-primary to-primary-glow text-primary-foreground shadow-glow"
               >
-                {claiming ? <><Loader2 className="h-4 w-4 animate-spin" /> Claiming…</> : <><Wallet className="h-4 w-4" /> Claim {selected.size} position{selected.size === 1 ? "" : "s"}</>}
+                {claiming ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" /> Claiming…
+                  </>
+                ) : (
+                  <>
+                    <Wallet className="h-4 w-4" /> 
+                    {selected.size > 1 ? `Batch Claim ${selected.size}` : "Claim Position"}
+                  </>
+                )}
               </Button>
             </DialogFooter>
           </>

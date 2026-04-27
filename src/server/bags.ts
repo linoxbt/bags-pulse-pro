@@ -25,6 +25,11 @@ export type Token = {
   status?: string | null;
   dbcPoolKey?: string | null;
   dammV2PoolKey?: string | null;
+  partner?: {
+    appId: string;
+    appName: string;
+    verified: boolean;
+  } | null;
 };
 
 export type FeedEvent = {
@@ -37,6 +42,11 @@ export type FeedEvent = {
   actor: string;
   message: string;
   at: string;
+  partner?: {
+    appId: string;
+    appName: string;
+    verified: boolean;
+  } | null;
 };
 
 async function bagsFetch(path: string): Promise<unknown | null> {
@@ -143,6 +153,7 @@ function normalizeBagsToken(raw: unknown, i = 0): Token {
     status,
     dbcPoolKey: typeof t.dbcPoolKey === "string" ? t.dbcPoolKey : null,
     dammV2PoolKey: typeof t.dammV2PoolKey === "string" ? t.dammV2PoolKey : null,
+    partner: null,
   };
 }
 
@@ -169,10 +180,48 @@ async function loadBagsTokens(): Promise<Token[]> {
   const feed = unwrapList(await bagsFetch("/token-launch/feed"));
   const tokens = feed.map((raw, i) => normalizeBagsToken(raw, i)).filter((t) => !t.mint.startsWith("unknown"));
   if (tokens.length === 0) return [];
-  // Enrich with DexScreener market data
+
+  // 1. Enrich with DexScreener market data
   const dexMap = await dexFetchBatch(tokens.map((t) => t.mint));
   const enriched = tokens.map((t) => enrichWithDex(t, dexMap.get(t.mint)));
-  // Sort by market cap (the leaderboard signal)
+
+  // 2. Enrich with partner data from our DB
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const mints = enriched.map((t) => t.mint);
+    const { data: splits } = await supabaseAdmin
+      .from("fee_splits")
+      .select("source, metadata")
+      .filter("metadata->>mint", "in", `(${mints.join(",")})`);
+
+    if (splits && splits.length > 0) {
+      const partnerIds = [...new Set(splits.map((s) => s.source))];
+      const { data: partners } = await supabaseAdmin
+        .from("partner_registry")
+        .select("app_id, app_name, is_active, domain_verified, wallet_verified")
+        .in("app_id", partnerIds);
+
+      if (partners) {
+        const pMap = new Map(partners.map((p) => [p.app_id, p]));
+        const sMap = new Map(splits.map((s) => [String((s.metadata as any)?.mint), s.source]));
+
+        for (const t of enriched) {
+          const source = sMap.get(t.mint);
+          const p = source ? pMap.get(source) : null;
+          if (p) {
+            t.partner = {
+              appId: p.app_id,
+              appName: p.app_name,
+              verified: p.is_active && p.domain_verified && p.wallet_verified,
+            };
+          }
+        }
+      }
+    }
+  } catch (err) {
+    console.error("[bags] partner enrich failed", err);
+  }
+
   return enriched.sort((a, b) => b.marketCap - a.marketCap);
 }
 
@@ -265,13 +314,21 @@ export const fetchFeed = createServerFn({ method: "GET" }).handler(
     const dexMap = await dexFetchBatch(tokens.map((t) => t.mint));
     const enriched = tokens.map((t) => enrichWithDex(t, dexMap.get(t.mint)));
     // Launch / graduation events from the Bags feed
-    const launchEvents = enriched.map((t, i) => feedEventFromToken(t, asRecord(raw[i]), i));
+    const launchEvents = enriched.map((t, i) => {
+      const ev = feedEventFromToken(t, asRecord(raw[i]), i);
+      ev.partner = t.partner;
+      return ev;
+    });
     // On-chain events from Helius for the top mints (cap to control latency)
     const topMints = enriched.slice(0, 6);
     const onchainBatches = await Promise.all(
       topMints.map(async (t) => {
         const txs = await fetchHeliusTxs(t.mint, 4);
-        return txs.map((tx) => txToEvent(tx, t));
+        return txs.map((tx) => {
+          const ev = txToEvent(tx, t);
+          ev.partner = t.partner;
+          return ev;
+        });
       }),
     );
     const onchainEvents = onchainBatches.flat();
@@ -339,6 +396,33 @@ export const fetchTokenDetail = createServerFn({ method: "GET" })
       console.error("[bags] dex enrich failed", err);
     }
     if (!token) return { token: null, live: false };
+
+    // Enrichment with partner data
+    try {
+      const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+      const { data: split } = await supabaseAdmin
+        .from("fee_splits")
+        .select("source")
+        .filter("metadata->>mint", "eq", data.mint)
+        .maybeSingle();
+      
+      if (split) {
+        const { data: partner } = await supabaseAdmin
+          .from("partner_registry")
+          .select("app_id, app_name, is_active, domain_verified, wallet_verified")
+          .eq("app_id", split.source)
+          .maybeSingle();
+        
+        if (partner) {
+          token.partner = {
+            appId: partner.app_id,
+            appName: partner.app_name,
+            verified: partner.is_active && partner.domain_verified && partner.wallet_verified
+          };
+        }
+      }
+    } catch {}
+
     // Lifetime fees from Bags
     const fees = await bagsFetch(`/token-launch/lifetime-fees?tokenMint=${encodeURIComponent(data.mint)}`).catch(() => null);
     const feeValue = asRecord(fees).response;

@@ -62,10 +62,19 @@ export const getSwapQuote = createServerFn({ method: "POST" })
 
 export const buildSwapTransaction = createServerFn({ method: "POST" })
   .inputValidator(
-    (d: { quote: unknown; userPublicKey: string }) => d,
+    (d: { quote: any; userPublicKey: string }) => d,
   )
   .handler(async ({ data }): Promise<{ swapTransaction: string | null; error?: string }> => {
     try {
+      const { PublicKey } = await import("@solana/web3.js");
+      const { getAssociatedTokenAddress } = await import("@solana/spl-token");
+      
+      const outMint = new PublicKey(data.quote.outputMint);
+      const treasury = new PublicKey(BAGSPULSE_TREASURY);
+      
+      // Derive the referral ATA for the output mint owned by the treasury
+      const feeAccount = await getAssociatedTokenAddress(outMint, treasury);
+
       const res = await fetch(JUP_SWAP, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -73,11 +82,10 @@ export const buildSwapTransaction = createServerFn({ method: "POST" })
           quoteResponse: data.quote,
           userPublicKey: data.userPublicKey,
           wrapAndUnwrapSol: true,
-          // PulseRouter cut → BagsPulse treasury (Jupiter requires this be a
-          // referral token-account; the v6 API auto-creates it for SPL fee
-          // accounts. For SOL fees we rely on the user side to wrap.)
-          feeAccount: undefined, // set client-side once referral ATA exists
+          // PulseRouter cut -> BagsPulse treasury
+          feeAccount: feeAccount.toBase58(),
           dynamicComputeUnitLimit: true,
+          prioritizationFeeLamports: "auto", // Set a reasonable priority fee
         }),
       });
       if (!res.ok) return { swapTransaction: null, error: `Jupiter swap failed (${res.status})` };
@@ -86,4 +94,54 @@ export const buildSwapTransaction = createServerFn({ method: "POST" })
     } catch (e) {
       return { swapTransaction: null, error: (e as Error).message };
     }
+  });
+
+export const buildBasketTransactions = createServerFn({ method: "POST" })
+  .inputValidator(
+    (d: { 
+      userPublicKey: string; 
+      items: Array<{ mint: string; amount: number }>; 
+      slippageBps?: number;
+    }) => d,
+  )
+  .handler(async ({ data }): Promise<{ transactions: string[]; errors: string[] }> => {
+    const transactions: string[] = [];
+    const errors: string[] = [];
+
+    // Process each item to get a quote and then a transaction
+    for (const item of data.items) {
+      try {
+        const quoteRes = await getSwapQuote({ 
+          data: { 
+            inputMint: "So11111111111111111111111111111111111111112", 
+            outputMint: item.mint, 
+            amount: item.amount, 
+            slippageBps: data.slippageBps 
+          } 
+        });
+
+        if (quoteRes.error || !quoteRes.quote) {
+          errors.push(`Quote failed for ${item.mint}: ${quoteRes.error}`);
+          continue;
+        }
+
+        const txRes = await buildSwapTransaction({ 
+          data: { 
+            quote: JSON.parse(JSON.stringify(quoteRes.quote)), // Ensure it's the raw quote object Jupiter expects
+            userPublicKey: data.userPublicKey 
+          } 
+        });
+
+        if (txRes.error || !txRes.swapTransaction) {
+          errors.push(`TX failed for ${item.mint}: ${txRes.error}`);
+          continue;
+        }
+
+        transactions.push(txRes.swapTransaction);
+      } catch (err) {
+        errors.push(`System error for ${item.mint}: ${(err as Error).message}`);
+      }
+    }
+
+    return { transactions, errors };
   });

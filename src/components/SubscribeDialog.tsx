@@ -39,27 +39,55 @@ export function SubscribeDialog({ open, onOpenChange, tier, currency, solUsd }: 
       toast.error("Connect your wallet first");
       return;
     }
-    if (currency !== "SOL") {
-      toast.message("USDC/USDT payments coming soon", {
-        description: "For now please pay in SOL.",
-      });
-      return;
-    }
     setSubmitting(true);
     setSignature(null);
     try {
       const { PublicKey, SystemProgram, Transaction, LAMPORTS_PER_SOL } = await import("@solana/web3.js");
       const treasury = new PublicKey(BAGSPULSE_TREASURY);
-      const lamports = Math.floor(priceSol * LAMPORTS_PER_SOL);
-      if (lamports <= 0) throw new Error("Could not compute SOL amount");
+      
+      let tx = new Transaction();
+      
+      if (currency === "SOL") {
+        const lamports = Math.floor(priceSol * LAMPORTS_PER_SOL);
+        if (lamports <= 0) throw new Error("Could not compute SOL amount");
+        tx.add(
+          SystemProgram.transfer({
+            fromPubkey: publicKey,
+            toPubkey: treasury,
+            lamports,
+          })
+        );
+      } else {
+        // USDC or USDT
+        const { getAssociatedTokenAddress, createAssociatedTokenAccountIdempotentInstruction, createTransferCheckedInstruction } = await import("@solana/spl-token");
+        const USDC_MINT_KEY = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+        const USDT_MINT_KEY = new PublicKey("Es9vMFrzaCERmJfrF4H2FYD4KCoNkY11McCe8BenwNYB");
+        const mint = currency === "USDC" ? USDC_MINT_KEY : USDT_MINT_KEY;
+        const decimals = 6; // Both USDC and USDT have 6 decimals on Solana
+        const amount = Math.floor(priceUsd * Math.pow(10, decimals));
+        if (amount <= 0) throw new Error(`Could not compute ${currency} amount`);
 
-      const tx = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: publicKey,
-          toPubkey: treasury,
-          lamports,
-        }),
-      );
+        const userAta = await getAssociatedTokenAddress(mint, publicKey);
+        const treasuryAta = await getAssociatedTokenAddress(mint, treasury);
+
+        tx.add(
+          createAssociatedTokenAccountIdempotentInstruction(
+            publicKey, // payer
+            treasuryAta, // ata
+            treasury, // owner
+            mint // mint
+          ),
+          createTransferCheckedInstruction(
+            userAta, // source
+            mint, // mint
+            treasuryAta, // destination
+            publicKey, // owner of source
+            amount, // amount
+            decimals // decimals
+          )
+        );
+      }
+
       const sig = await sendTransaction(tx, connection);
       setSignature(sig);
 
@@ -77,7 +105,8 @@ export function SubscribeDialog({ open, onOpenChange, tier, currency, solUsd }: 
           wallet_address: publicKey.toBase58(),
           strategy_id: strategyId,
           payment_tx: sig,
-          amount_sol: priceSol,
+          amount: currency === "SOL" ? priceSol : priceUsd,
+          payment_token: currency,
         }),
       });
       if (!res.ok) {
