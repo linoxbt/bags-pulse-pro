@@ -27,6 +27,8 @@ import { toast } from "sonner";
 import { getMyLicenseTier, tierAtLeast, type LicenseSummary } from "@/server/licenses";
 import { Badge } from "@/components/ui/badge";
 import { Sparkles, Info } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 
 interface Props {
   open: boolean;
