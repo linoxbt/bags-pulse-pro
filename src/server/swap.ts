@@ -17,7 +17,7 @@ export type SwapQuote = {
   swapMode: "ExactIn" | "ExactOut";
   slippageBps: number;
   priceImpactPct: string;
-  routePlan: Array<Record<string, unknown>>;
+  routePlan: string; // JSON-stringified — keep serializable across server-fn boundary
   protocolFeeBps: number;
   protocolFeeRecipient: string;
 };
