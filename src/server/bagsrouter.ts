@@ -1,8 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BagsSDK } from "@bagsfm/bags-sdk";
-import { Connection, PublicKey, ComputeBudgetProgram, TransactionMessage, VersionedTransaction } from "@solana/web3.js";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { Connection, PublicKey } from "@solana/web3.js";
 
 const BAGS_BASE = "https://public-api-v2.bags.fm/api/v1";
 
@@ -15,8 +14,14 @@ export type ClaimablePosition = {
   feeBps: number;
 };
 
+function heliusRpc() {
+  return process.env.HELIUS_API_KEY
+    ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
+    : "https://api.mainnet-beta.solana.com";
+}
+
 async function bagsFetch(path: string): Promise<unknown | null> {
-  const apiKey = process.env.BAGS_API_KEY;
+  const apiKey = process.env.BAGS_PARTNER_KEY || process.env.BAGS_API_KEY;
   if (!apiKey) return null;
   try {
     const res = await fetch(`${BAGS_BASE}${path}`, {
@@ -37,7 +42,11 @@ export const getClaimablePositions = createServerFn({ method: "POST" })
       `/token-launch/claimable-positions?wallet=${data.wallet}`,
     )) as { positions?: unknown[]; response?: unknown[] } | null;
 
-    const list = Array.isArray(live?.response) ? live.response : Array.isArray(live?.positions) ? live.positions : [];
+    const list = Array.isArray(live?.response)
+      ? live.response
+      : Array.isArray(live?.positions)
+        ? live.positions
+        : [];
     if (list.length > 0) {
       const positions: ClaimablePosition[] = list.slice(0, 50).map((raw) => {
         const p = raw as Record<string, unknown>;
@@ -56,77 +65,54 @@ export const getClaimablePositions = createServerFn({ method: "POST" })
     return { positions: [], live: true };
   });
 
-// Build an unsigned claim transaction for the user's wallet to sign.
-// Returns base64-encoded serialized transaction (Bags REST returns this format).
+// Build claim transactions via Bags SDK's FeesService.
+// Returns base64-encoded legacy Transactions (the SDK returns `Transaction`, not versioned).
 export const buildClaimTransaction = createServerFn({ method: "POST" })
   .inputValidator((d: { wallet: string; mints: string[] }) => d)
-  .handler(async ({ data }): Promise<{ transaction: string | null; error?: string }> => {
-    const apiKey = process.env.BAGS_API_KEY;
-    if (!apiKey) {
-      return { transaction: null, error: "Bags API key not configured" };
-    }
-    try {
-      const rpc = process.env.HELIUS_API_KEY
-        ? `https://mainnet.helius-rpc.com/?api-key=${process.env.HELIUS_API_KEY}`
-        : "https://api.mainnet-beta.solana.com";
-      const sdk = new BagsSDK({ apiKey, connection: new Connection(rpc) });
-
-      // Build the claim instruction via the official SDK
-      const claimer = new PublicKey(data.wallet);
-      const mints = data.mints.map(m => new PublicKey(m));
-      
-      const tx = await sdk.tokenLaunch.claimFees({
-        feeClaimer: claimer,
-        tokenMints: mints,
-      });
-
-      // Add priority fees to the transaction
-      const priorityFeeInstruction = ComputeBudgetProgram.setComputeUnitPrice({
-        microLamports: 100_000, // 0.1 lamports/CU - reasonable for landing fast
-      });
-
-      // To add an instruction to a VersionedTransaction, we need to decompile and recompile
-      // OR the SDK might have already included one.
-      // For simplicity, let's assume we want to ensure it has one.
-      
-      const { blockhash } = await sdk.connection.getLatestBlockhash();
-      
-      // Decompile the transaction message
-      const addressLookupTableAccounts = await Promise.all(
-        tx.message.addressTableLookups.map(async (lookup) => {
-          return (await sdk.connection.getAddressLookupTable(lookup.accountKey)).value;
-        })
-      );
-      
-      const message = TransactionMessage.decompile(tx.message, {
-        addressLookupTableAccounts: addressLookupTableAccounts.filter((a): a is any => a !== null),
-      });
-
-      // Add the priority fee instruction at the beginning
-      message.instructions.unshift(priorityFeeInstruction);
-
-      // Recompile
-      const newMessage = message.compileToV0Message(addressLookupTableAccounts.filter((a): a is any => a !== null));
-      const newTx = new VersionedTransaction(newMessage);
-
-      const base64 = Buffer.from(newTx.serialize()).toString("base64");
-      return { transaction: base64 };
-    } catch (e) {
-      return { transaction: null, error: (e as Error).message };
-    }
-  });
+  .handler(
+    async ({
+      data,
+    }): Promise<{ transactions: string[]; error?: string }> => {
+      const apiKey = process.env.BAGS_PARTNER_KEY || process.env.BAGS_API_KEY;
+      if (!apiKey) {
+        return { transactions: [], error: "Bags API key not configured" };
+      }
+      try {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const sdk = new BagsSDK(apiKey, new Connection(heliusRpc(), "confirmed") as any);
+        const claimer = new PublicKey(data.wallet);
+        const out: string[] = [];
+        for (const m of data.mints) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const txs = await sdk.fee.getClaimTransactions(claimer as any, new PublicKey(m) as any);
+          for (const tx of txs) {
+            const serialized = tx.serialize({
+              requireAllSignatures: false,
+              verifySignatures: false,
+            });
+            out.push(Buffer.from(serialized).toString("base64"));
+          }
+        }
+        return { transactions: out };
+      } catch (e) {
+        return { transactions: [], error: (e as Error).message };
+      }
+    },
+  );
 
 // Record a successful claim in our DB.
 export const recordFeeClaim = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: {
-    wallet: string;
-    mint: string;
-    symbol: string;
-    amount: number;
-    amountUsd: number;
-    txSignature: string;
-  }) => d)
+  .inputValidator(
+    (d: {
+      wallet: string;
+      mint: string;
+      symbol: string;
+      amount: number;
+      amountUsd: number;
+      txSignature: string;
+    }) => d,
+  )
   .handler(async ({ data, context }) => {
     const { supabase, userId } = context;
     const { error } = await supabase.from("fee_claims").insert({

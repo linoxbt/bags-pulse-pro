@@ -42,7 +42,7 @@ export function ExecuteBasketDialog({ basket, tokens, open, onOpenChange }: Exec
     enabled: open
   });
 
-  const isPro = tier && (tier.id === "alpha-pulse" || tier.id === "group-basket-ai");
+  const isPro = tier && (tier.tier === "pro" || tier.tier === "elite");
 
   const execute = async () => {
     if (!publicKey) return toast.error("Wallet not connected");

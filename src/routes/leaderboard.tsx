@@ -118,7 +118,7 @@ function LeaderboardPage() {
                             <Link to="/token/$mint" params={{ mint: t.mint }} className="font-medium flex items-center gap-1 hover:text-primary">
                               ${t.symbol}
                               {t.partner?.verified && (
-                                <ShieldCheck className="h-3 w-3 text-success" title={`Launched via ${t.partner.appName}`} />
+                                <ShieldCheck className="h-3 w-3 text-success" aria-label={`Launched via ${t.partner.appName}`} />
                               )}
                               {t.graduated && (
                                 <span className="text-[10px] font-mono uppercase rounded bg-accent/15 text-accent px-1 py-0.5">
