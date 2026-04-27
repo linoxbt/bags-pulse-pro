@@ -174,14 +174,14 @@ async function callTool(name: string, args: Record<string, unknown>) {
   }
 
   if (name === "quote_swap") {
-    const res = await getSwapQuote({
+    const res = (await getSwapQuote({
       data: {
         inputMint: String(args.inputMint),
         outputMint: String(args.outputMint),
         amount: Number(args.amount),
         slippageBps: Number(args.slippageBps ?? 100),
       },
-    });
+    })) as { quote: unknown; error?: string };
     return res.quote;
   }
 
