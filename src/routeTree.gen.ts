@@ -11,8 +11,10 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SwapRouteImport } from './routes/swap'
 import { Route as RouterRouteImport } from './routes/router'
+import { Route as ReferralsRouteImport } from './routes/referrals'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
+import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as DocsRouteImport } from './routes/docs'
@@ -25,6 +27,7 @@ import { Route as BasketsIdRouteImport } from './routes/baskets.$id'
 import { Route as ApiMcpRouteImport } from './routes/api.mcp'
 import { Route as ApiLicensesConfirmRouteImport } from './routes/api.licenses.confirm'
 import { Route as ApiActionsSubscribeRouteImport } from './routes/api.actions.subscribe'
+import { Route as ApiPublicRouterPartnerRouteImport } from './routes/api.public.router.partner'
 import { Route as ApiPublicAgentRunRouteImport } from './routes/api.public.agent.run'
 
 const SwapRoute = SwapRouteImport.update({
@@ -37,6 +40,11 @@ const RouterRoute = RouterRouteImport.update({
   path: '/router',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ReferralsRoute = ReferralsRouteImport.update({
+  id: '/referrals',
+  path: '/referrals',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
@@ -45,6 +53,11 @@ const PricingRoute = PricingRouteImport.update({
 const PortfolioRoute = PortfolioRouteImport.update({
   id: '/portfolio',
   path: '/portfolio',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LegalRoute = LegalRouteImport.update({
+  id: '/legal',
+  path: '/legal',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LeaderboardRoute = LeaderboardRouteImport.update({
@@ -107,6 +120,11 @@ const ApiActionsSubscribeRoute = ApiActionsSubscribeRouteImport.update({
   path: '/api/actions/subscribe',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicRouterPartnerRoute = ApiPublicRouterPartnerRouteImport.update({
+  id: '/api/public/router/partner',
+  path: '/api/public/router/partner',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicAgentRunRoute = ApiPublicAgentRunRouteImport.update({
   id: '/api/public/agent/run',
   path: '/api/public/agent/run',
@@ -121,8 +139,10 @@ export interface FileRoutesByFullPath {
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/legal': typeof LegalRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
+  '/referrals': typeof ReferralsRoute
   '/router': typeof RouterRoute
   '/swap': typeof SwapRoute
   '/api/mcp': typeof ApiMcpRoute
@@ -131,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
   '/api/public/agent/run': typeof ApiPublicAgentRunRoute
+  '/api/public/router/partner': typeof ApiPublicRouterPartnerRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -140,8 +161,10 @@ export interface FileRoutesByTo {
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/legal': typeof LegalRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
+  '/referrals': typeof ReferralsRoute
   '/router': typeof RouterRoute
   '/swap': typeof SwapRoute
   '/api/mcp': typeof ApiMcpRoute
@@ -150,6 +173,7 @@ export interface FileRoutesByTo {
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
   '/api/public/agent/run': typeof ApiPublicAgentRunRoute
+  '/api/public/router/partner': typeof ApiPublicRouterPartnerRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -160,8 +184,10 @@ export interface FileRoutesById {
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
   '/leaderboard': typeof LeaderboardRoute
+  '/legal': typeof LegalRoute
   '/portfolio': typeof PortfolioRoute
   '/pricing': typeof PricingRoute
+  '/referrals': typeof ReferralsRoute
   '/router': typeof RouterRoute
   '/swap': typeof SwapRoute
   '/api/mcp': typeof ApiMcpRoute
@@ -170,6 +196,7 @@ export interface FileRoutesById {
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
   '/api/public/agent/run': typeof ApiPublicAgentRunRoute
+  '/api/public/router/partner': typeof ApiPublicRouterPartnerRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -181,8 +208,10 @@ export interface FileRouteTypes {
     | '/docs'
     | '/feed'
     | '/leaderboard'
+    | '/legal'
     | '/portfolio'
     | '/pricing'
+    | '/referrals'
     | '/router'
     | '/swap'
     | '/api/mcp'
@@ -191,6 +220,7 @@ export interface FileRouteTypes {
     | '/api/actions/subscribe'
     | '/api/licenses/confirm'
     | '/api/public/agent/run'
+    | '/api/public/router/partner'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -200,8 +230,10 @@ export interface FileRouteTypes {
     | '/docs'
     | '/feed'
     | '/leaderboard'
+    | '/legal'
     | '/portfolio'
     | '/pricing'
+    | '/referrals'
     | '/router'
     | '/swap'
     | '/api/mcp'
@@ -210,6 +242,7 @@ export interface FileRouteTypes {
     | '/api/actions/subscribe'
     | '/api/licenses/confirm'
     | '/api/public/agent/run'
+    | '/api/public/router/partner'
   id:
     | '__root__'
     | '/'
@@ -219,8 +252,10 @@ export interface FileRouteTypes {
     | '/docs'
     | '/feed'
     | '/leaderboard'
+    | '/legal'
     | '/portfolio'
     | '/pricing'
+    | '/referrals'
     | '/router'
     | '/swap'
     | '/api/mcp'
@@ -229,6 +264,7 @@ export interface FileRouteTypes {
     | '/api/actions/subscribe'
     | '/api/licenses/confirm'
     | '/api/public/agent/run'
+    | '/api/public/router/partner'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -239,8 +275,10 @@ export interface RootRouteChildren {
   DocsRoute: typeof DocsRoute
   FeedRoute: typeof FeedRoute
   LeaderboardRoute: typeof LeaderboardRoute
+  LegalRoute: typeof LegalRoute
   PortfolioRoute: typeof PortfolioRoute
   PricingRoute: typeof PricingRoute
+  ReferralsRoute: typeof ReferralsRoute
   RouterRoute: typeof RouterRoute
   SwapRoute: typeof SwapRoute
   ApiMcpRoute: typeof ApiMcpRoute
@@ -248,6 +286,7 @@ export interface RootRouteChildren {
   ApiActionsSubscribeRoute: typeof ApiActionsSubscribeRoute
   ApiLicensesConfirmRoute: typeof ApiLicensesConfirmRoute
   ApiPublicAgentRunRoute: typeof ApiPublicAgentRunRoute
+  ApiPublicRouterPartnerRoute: typeof ApiPublicRouterPartnerRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -266,6 +305,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RouterRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/referrals': {
+      id: '/referrals'
+      path: '/referrals'
+      fullPath: '/referrals'
+      preLoaderRoute: typeof ReferralsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -278,6 +324,13 @@ declare module '@tanstack/react-router' {
       path: '/portfolio'
       fullPath: '/portfolio'
       preLoaderRoute: typeof PortfolioRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/legal': {
+      id: '/legal'
+      path: '/legal'
+      fullPath: '/legal'
+      preLoaderRoute: typeof LegalRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/leaderboard': {
@@ -364,6 +417,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiActionsSubscribeRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/router/partner': {
+      id: '/api/public/router/partner'
+      path: '/api/public/router/partner'
+      fullPath: '/api/public/router/partner'
+      preLoaderRoute: typeof ApiPublicRouterPartnerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/agent/run': {
       id: '/api/public/agent/run'
       path: '/api/public/agent/run'
@@ -393,8 +453,10 @@ const rootRouteChildren: RootRouteChildren = {
   DocsRoute: DocsRoute,
   FeedRoute: FeedRoute,
   LeaderboardRoute: LeaderboardRoute,
+  LegalRoute: LegalRoute,
   PortfolioRoute: PortfolioRoute,
   PricingRoute: PricingRoute,
+  ReferralsRoute: ReferralsRoute,
   RouterRoute: RouterRoute,
   SwapRoute: SwapRoute,
   ApiMcpRoute: ApiMcpRoute,
@@ -402,6 +464,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiActionsSubscribeRoute: ApiActionsSubscribeRoute,
   ApiLicensesConfirmRoute: ApiLicensesConfirmRoute,
   ApiPublicAgentRunRoute: ApiPublicAgentRunRoute,
+  ApiPublicRouterPartnerRoute: ApiPublicRouterPartnerRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
