@@ -229,7 +229,7 @@ function TokenPage() {
                     {scorecard.topTokens
                       .filter((t: { mint: string }) => t.mint !== token.mint)
                       .slice(0, 6)
-                      .map((t: { mint: string; symbol: string; image: string }) => (
+                      .map((t: { mint: string; symbol: string; image: string; marketCap: number }) => (
                         <Link
                           key={t.mint}
                           to="/token/$mint"

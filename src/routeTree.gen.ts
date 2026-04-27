@@ -26,7 +26,9 @@ import { Route as TokenMintRouteImport } from './routes/token.$mint'
 import { Route as BasketsIdRouteImport } from './routes/baskets.$id'
 import { Route as ApiMcpRouteImport } from './routes/api.mcp'
 import { Route as ApiLicensesConfirmRouteImport } from './routes/api.licenses.confirm'
+import { Route as ApiCronTasksRouteImport } from './routes/api.cron.tasks'
 import { Route as ApiActionsSubscribeRouteImport } from './routes/api.actions.subscribe'
+import { Route as ApiPublicWebhooksHeliusRouteImport } from './routes/api.public.webhooks.helius'
 import { Route as ApiPublicRouterPartnerRouteImport } from './routes/api.public.router.partner'
 import { Route as ApiPublicAgentRunRouteImport } from './routes/api.public.agent.run'
 
@@ -115,9 +117,19 @@ const ApiLicensesConfirmRoute = ApiLicensesConfirmRouteImport.update({
   path: '/api/licenses/confirm',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiCronTasksRoute = ApiCronTasksRouteImport.update({
+  id: '/api/cron/tasks',
+  path: '/api/cron/tasks',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiActionsSubscribeRoute = ApiActionsSubscribeRouteImport.update({
   id: '/api/actions/subscribe',
   path: '/api/actions/subscribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiPublicWebhooksHeliusRoute = ApiPublicWebhooksHeliusRouteImport.update({
+  id: '/api/public/webhooks/helius',
+  path: '/api/public/webhooks/helius',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRouterPartnerRoute = ApiPublicRouterPartnerRouteImport.update({
@@ -149,9 +161,11 @@ export interface FileRoutesByFullPath {
   '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
+  '/api/cron/tasks': typeof ApiCronTasksRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
   '/api/public/agent/run': typeof ApiPublicAgentRunRoute
   '/api/public/router/partner': typeof ApiPublicRouterPartnerRoute
+  '/api/public/webhooks/helius': typeof ApiPublicWebhooksHeliusRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -171,9 +185,11 @@ export interface FileRoutesByTo {
   '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
+  '/api/cron/tasks': typeof ApiCronTasksRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
   '/api/public/agent/run': typeof ApiPublicAgentRunRoute
   '/api/public/router/partner': typeof ApiPublicRouterPartnerRoute
+  '/api/public/webhooks/helius': typeof ApiPublicWebhooksHeliusRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -194,9 +210,11 @@ export interface FileRoutesById {
   '/baskets/$id': typeof BasketsIdRoute
   '/token/$mint': typeof TokenMintRoute
   '/api/actions/subscribe': typeof ApiActionsSubscribeRoute
+  '/api/cron/tasks': typeof ApiCronTasksRoute
   '/api/licenses/confirm': typeof ApiLicensesConfirmRoute
   '/api/public/agent/run': typeof ApiPublicAgentRunRoute
   '/api/public/router/partner': typeof ApiPublicRouterPartnerRoute
+  '/api/public/webhooks/helius': typeof ApiPublicWebhooksHeliusRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -218,9 +236,11 @@ export interface FileRouteTypes {
     | '/baskets/$id'
     | '/token/$mint'
     | '/api/actions/subscribe'
+    | '/api/cron/tasks'
     | '/api/licenses/confirm'
     | '/api/public/agent/run'
     | '/api/public/router/partner'
+    | '/api/public/webhooks/helius'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -240,9 +260,11 @@ export interface FileRouteTypes {
     | '/baskets/$id'
     | '/token/$mint'
     | '/api/actions/subscribe'
+    | '/api/cron/tasks'
     | '/api/licenses/confirm'
     | '/api/public/agent/run'
     | '/api/public/router/partner'
+    | '/api/public/webhooks/helius'
   id:
     | '__root__'
     | '/'
@@ -262,9 +284,11 @@ export interface FileRouteTypes {
     | '/baskets/$id'
     | '/token/$mint'
     | '/api/actions/subscribe'
+    | '/api/cron/tasks'
     | '/api/licenses/confirm'
     | '/api/public/agent/run'
     | '/api/public/router/partner'
+    | '/api/public/webhooks/helius'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -284,9 +308,11 @@ export interface RootRouteChildren {
   ApiMcpRoute: typeof ApiMcpRoute
   TokenMintRoute: typeof TokenMintRoute
   ApiActionsSubscribeRoute: typeof ApiActionsSubscribeRoute
+  ApiCronTasksRoute: typeof ApiCronTasksRoute
   ApiLicensesConfirmRoute: typeof ApiLicensesConfirmRoute
   ApiPublicAgentRunRoute: typeof ApiPublicAgentRunRoute
   ApiPublicRouterPartnerRoute: typeof ApiPublicRouterPartnerRoute
+  ApiPublicWebhooksHeliusRoute: typeof ApiPublicWebhooksHeliusRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -410,11 +436,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiLicensesConfirmRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/cron/tasks': {
+      id: '/api/cron/tasks'
+      path: '/api/cron/tasks'
+      fullPath: '/api/cron/tasks'
+      preLoaderRoute: typeof ApiCronTasksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/actions/subscribe': {
       id: '/api/actions/subscribe'
       path: '/api/actions/subscribe'
       fullPath: '/api/actions/subscribe'
       preLoaderRoute: typeof ApiActionsSubscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/public/webhooks/helius': {
+      id: '/api/public/webhooks/helius'
+      path: '/api/public/webhooks/helius'
+      fullPath: '/api/public/webhooks/helius'
+      preLoaderRoute: typeof ApiPublicWebhooksHeliusRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/router/partner': {
@@ -462,9 +502,11 @@ const rootRouteChildren: RootRouteChildren = {
   ApiMcpRoute: ApiMcpRoute,
   TokenMintRoute: TokenMintRoute,
   ApiActionsSubscribeRoute: ApiActionsSubscribeRoute,
+  ApiCronTasksRoute: ApiCronTasksRoute,
   ApiLicensesConfirmRoute: ApiLicensesConfirmRoute,
   ApiPublicAgentRunRoute: ApiPublicAgentRunRoute,
   ApiPublicRouterPartnerRoute: ApiPublicRouterPartnerRoute,
+  ApiPublicWebhooksHeliusRoute: ApiPublicWebhooksHeliusRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
