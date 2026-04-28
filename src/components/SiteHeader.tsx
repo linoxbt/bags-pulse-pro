@@ -12,6 +12,8 @@ const NAV = [
   { to: "/feed", label: "BagsFeed" },
   { to: "/portfolio", label: "Portfolio" },
   { to: "/baskets", label: "Baskets" },
+  { to: "/swap", label: "Swap" },
+  { to: "/launch", label: "Launch" },
   { to: "/router", label: "PulseRouter" },
   { to: "/referrals", label: "Referrals" },
   { to: "/docs", label: "Docs" },
