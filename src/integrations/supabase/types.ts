@@ -440,6 +440,39 @@ export type Database = {
         }
         Relationships: []
       }
+      swap_favorites: {
+        Row: {
+          created_at: string
+          decimals: number | null
+          id: string
+          logo_uri: string | null
+          mint: string
+          name: string | null
+          symbol: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          decimals?: number | null
+          id?: string
+          logo_uri?: string | null
+          mint: string
+          name?: string | null
+          symbol?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          decimals?: number | null
+          id?: string
+          logo_uri?: string | null
+          mint?: string
+          name?: string | null
+          symbol?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       watchlists: {
         Row: {
           created_at: string
