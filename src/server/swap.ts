@@ -2,13 +2,18 @@
 // the Worker runtime. Every swap routes a protocol fee to the BagsPulse
 // treasury via Jupiter's `platformFeeBps` + `feeAccount` parameters →
 // real PulseRouter revenue, on-chain, settled inside the swap tx itself.
+//
+// NOTE: As of 2026-04, the old `quote-api.jup.ag/v6/*` hostname is dead.
+// We target `lite-api.jup.ag` — the current free-tier Jupiter Aggregator API.
 import { createServerFn } from "@tanstack/react-start";
 import { BAGSPULSE_TREASURY, PULSEROUTER_PROTOCOL_BPS } from "@/lib/constants";
 
-const JUP_QUOTE = "https://quote-api.jup.ag/v6/quote";
-const JUP_SWAP = "https://quote-api.jup.ag/v6/swap";
-const JUP_TOKENS = "https://tokens.jup.ag";
-const JUP_PRICE = "https://price.jup.ag/v6/price";
+const JUP_BASE = "https://lite-api.jup.ag";
+const JUP_QUOTE = `${JUP_BASE}/swap/v1/quote`;
+const JUP_SWAP = `${JUP_BASE}/swap/v1/swap`;
+const JUP_TOKEN_TAG = `${JUP_BASE}/tokens/v2/tag`;
+const JUP_TOKEN_SEARCH = `${JUP_BASE}/tokens/v2/search`;
+const JUP_PRICE = `${JUP_BASE}/price/v3`;
 
 function heliusRpc(): string {
   const key = process.env.HELIUS_API_KEY;
@@ -39,27 +44,38 @@ export type SwapQuote = {
   routePlan: string; // JSON-stringified — keep serializable across server-fn boundary
   protocolFeeBps: number;
   protocolFeeRecipient: string;
+  platformFeeLamports: string; // Jupiter-reported fee in output-mint base units
   raw: string; // JSON-stringified full Jupiter quote, needed verbatim by /swap endpoint
 };
 
-// Return the top ~200 strict-listed tokens from Jupiter — what jupiter.ag shows.
+// Map a v2-shape token row into our JupToken.
+// v2 returns: { id, name, symbol, icon, decimals, tokenProgram, stats24h: { buyVolume, sellVolume }, ... }
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function normalizeV2(t: any): JupToken {
+  const stats = t?.stats24h || {};
+  const vol = Number(stats.buyVolume ?? 0) + Number(stats.sellVolume ?? 0);
+  return {
+    address: String(t.id ?? t.address ?? ""),
+    symbol: String(t.symbol ?? "?"),
+    name: String(t.name ?? "Unknown"),
+    decimals: Number(t.decimals ?? 9),
+    logoURI: typeof t.icon === "string" ? t.icon : typeof t.logoURI === "string" ? t.logoURI : null,
+    tags: Array.isArray(t.tags) ? (t.tags as string[]) : [],
+    daily_volume: vol > 0 ? vol : null,
+  };
+}
+
+// Return the top ~300 verified tokens from Jupiter — what jupiter.ag shows.
 export const listJupiterTokens = createServerFn({ method: "GET" }).handler(
   async (): Promise<{ tokens: JupToken[] }> => {
     try {
-      const res = await fetch(`${JUP_TOKENS}/tokens?tags=verified`, {
+      const res = await fetch(`${JUP_TOKEN_TAG}?query=verified`, {
         headers: { accept: "application/json" },
       });
       if (!res.ok) return { tokens: [] };
-      const raw = (await res.json()) as Array<Record<string, unknown>>;
-      const tokens: JupToken[] = raw.slice(0, 300).map((t) => ({
-        address: String(t.address ?? ""),
-        symbol: String(t.symbol ?? "?"),
-        name: String(t.name ?? "Unknown"),
-        decimals: Number(t.decimals ?? 9),
-        logoURI: typeof t.logoURI === "string" ? t.logoURI : null,
-        tags: Array.isArray(t.tags) ? (t.tags as string[]) : [],
-        daily_volume: typeof t.daily_volume === "number" ? t.daily_volume : null,
-      }));
+      const raw = (await res.json()) as unknown;
+      const arr = Array.isArray(raw) ? raw : [];
+      const tokens: JupToken[] = arr.slice(0, 300).map(normalizeV2);
       return { tokens };
     } catch {
       return { tokens: [] };
@@ -67,19 +83,21 @@ export const listJupiterTokens = createServerFn({ method: "GET" }).handler(
   },
 );
 
-// USD prices for a batch of mints (Jupiter Price API v6).
+// USD prices for a batch of mints (Jupiter Price v3).
+// v3 returns `{ [mint]: { usdPrice, ... } }`.
 export const getJupiterPrices = createServerFn({ method: "POST" })
   .inputValidator((d: { mints: string[] }) => d)
   .handler(async ({ data }): Promise<{ prices: Record<string, number> }> => {
     if (!data.mints.length) return { prices: {} };
     try {
-      const ids = data.mints.slice(0, 10).join(",");
+      const ids = data.mints.slice(0, 50).join(",");
       const res = await fetch(`${JUP_PRICE}?ids=${ids}`);
       if (!res.ok) return { prices: {} };
-      const json = (await res.json()) as { data?: Record<string, { price: number }> };
+      const json = (await res.json()) as Record<string, { usdPrice?: number; price?: number }>;
       const prices: Record<string, number> = {};
-      for (const [mint, row] of Object.entries(json.data ?? {})) {
-        prices[mint] = Number(row.price ?? 0);
+      for (const [mint, row] of Object.entries(json ?? {})) {
+        const p = Number(row?.usdPrice ?? row?.price ?? 0);
+        if (p > 0) prices[mint] = p;
       }
       return { prices };
     } catch {
@@ -92,22 +110,33 @@ export const resolveMint = createServerFn({ method: "POST" })
   .inputValidator((d: { mint: string }) => d)
   .handler(async ({ data }): Promise<{ token: JupToken | null }> => {
     try {
-      const res = await fetch(`${JUP_TOKENS}/token/${data.mint}`);
+      const res = await fetch(`${JUP_TOKEN_SEARCH}?query=${encodeURIComponent(data.mint)}`);
       if (!res.ok) return { token: null };
-      const t = (await res.json()) as Record<string, unknown>;
-      return {
-        token: {
-          address: String(t.address ?? data.mint),
-          symbol: String(t.symbol ?? "?"),
-          name: String(t.name ?? "Unknown"),
-          decimals: Number(t.decimals ?? 9),
-          logoURI: typeof t.logoURI === "string" ? t.logoURI : null,
-          tags: Array.isArray(t.tags) ? (t.tags as string[]) : [],
-          daily_volume: typeof t.daily_volume === "number" ? t.daily_volume : null,
-        },
-      };
+      const raw = (await res.json()) as unknown;
+      const arr = Array.isArray(raw) ? raw : [];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const hit = arr.find((t: any) => String(t?.id) === data.mint) ?? arr[0];
+      if (!hit) return { token: null };
+      return { token: normalizeV2(hit) };
     } catch {
       return { token: null };
+    }
+  });
+
+// Free-text search by symbol / name (used by the picker).
+export const searchJupiterTokens = createServerFn({ method: "POST" })
+  .inputValidator((d: { query: string }) => d)
+  .handler(async ({ data }): Promise<{ tokens: JupToken[] }> => {
+    const q = data.query.trim();
+    if (!q) return { tokens: [] };
+    try {
+      const res = await fetch(`${JUP_TOKEN_SEARCH}?query=${encodeURIComponent(q)}`);
+      if (!res.ok) return { tokens: [] };
+      const raw = (await res.json()) as unknown;
+      const arr = Array.isArray(raw) ? raw : [];
+      return { tokens: arr.slice(0, 40).map(normalizeV2) };
+    } catch {
+      return { tokens: [] };
     }
   });
 
@@ -132,9 +161,11 @@ export const getSwapQuote = createServerFn({ method: "POST" })
         });
         const res = await fetch(`${JUP_QUOTE}?${params.toString()}`);
         if (!res.ok) {
-          return { quote: null, error: `Jupiter quote failed (${res.status})` };
+          const text = await res.text().catch(() => "");
+          return { quote: null, error: `Jupiter quote failed (${res.status})${text ? `: ${text.slice(0, 120)}` : ""}` };
         }
         const raw = (await res.json()) as Record<string, unknown>;
+        const platformFee = (raw.platformFee as { amount?: string } | undefined) ?? {};
         return {
           quote: {
             inputMint: String(raw.inputMint),
@@ -148,6 +179,7 @@ export const getSwapQuote = createServerFn({ method: "POST" })
             routePlan: JSON.stringify(raw.routePlan ?? []),
             protocolFeeBps: PULSEROUTER_PROTOCOL_BPS,
             protocolFeeRecipient: BAGSPULSE_TREASURY,
+            platformFeeLamports: String(platformFee.amount ?? "0"),
             raw: JSON.stringify(raw),
           },
         };
@@ -254,9 +286,10 @@ export const buildSwapTransaction = createServerFn({ method: "POST" })
           }),
         });
         if (!res.ok) {
+          const text = await res.text().catch(() => "");
           return {
             swapTransaction: null,
-            error: `Jupiter swap failed (${res.status})`,
+            error: `Jupiter swap failed (${res.status})${text ? `: ${text.slice(0, 120)}` : ""}`,
           };
         }
         const json = (await res.json()) as { swapTransaction?: string };
