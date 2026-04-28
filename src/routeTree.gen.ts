@@ -16,6 +16,7 @@ import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PortfolioRouteImport } from './routes/portfolio'
 import { Route as LegalRouteImport } from './routes/legal'
 import { Route as LeaderboardRouteImport } from './routes/leaderboard'
+import { Route as LaunchRouteImport } from './routes/launch'
 import { Route as FeedRouteImport } from './routes/feed'
 import { Route as DocsRouteImport } from './routes/docs'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -65,6 +66,11 @@ const LegalRoute = LegalRouteImport.update({
 const LeaderboardRoute = LeaderboardRouteImport.update({
   id: '/leaderboard',
   path: '/leaderboard',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LaunchRoute = LaunchRouteImport.update({
+  id: '/launch',
+  path: '/launch',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FeedRoute = FeedRouteImport.update({
@@ -150,6 +156,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
+  '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/legal': typeof LegalRoute
   '/portfolio': typeof PortfolioRoute
@@ -174,6 +181,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
+  '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/legal': typeof LegalRoute
   '/portfolio': typeof PortfolioRoute
@@ -199,6 +207,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/docs': typeof DocsRoute
   '/feed': typeof FeedRoute
+  '/launch': typeof LaunchRoute
   '/leaderboard': typeof LeaderboardRoute
   '/legal': typeof LegalRoute
   '/portfolio': typeof PortfolioRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/feed'
+    | '/launch'
     | '/leaderboard'
     | '/legal'
     | '/portfolio'
@@ -249,6 +259,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/feed'
+    | '/launch'
     | '/leaderboard'
     | '/legal'
     | '/portfolio'
@@ -273,6 +284,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/docs'
     | '/feed'
+    | '/launch'
     | '/leaderboard'
     | '/legal'
     | '/portfolio'
@@ -298,6 +310,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   DocsRoute: typeof DocsRoute
   FeedRoute: typeof FeedRoute
+  LaunchRoute: typeof LaunchRoute
   LeaderboardRoute: typeof LeaderboardRoute
   LegalRoute: typeof LegalRoute
   PortfolioRoute: typeof PortfolioRoute
@@ -364,6 +377,13 @@ declare module '@tanstack/react-router' {
       path: '/leaderboard'
       fullPath: '/leaderboard'
       preLoaderRoute: typeof LeaderboardRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/launch': {
+      id: '/launch'
+      path: '/launch'
+      fullPath: '/launch'
+      preLoaderRoute: typeof LaunchRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/feed': {
@@ -492,6 +512,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   DocsRoute: DocsRoute,
   FeedRoute: FeedRoute,
+  LaunchRoute: LaunchRoute,
   LeaderboardRoute: LeaderboardRoute,
   LegalRoute: LegalRoute,
   PortfolioRoute: PortfolioRoute,
@@ -511,3 +532,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
